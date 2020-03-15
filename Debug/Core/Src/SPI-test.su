@@ -1,0 +1,3 @@
+SPI-test.c:39:6:SPI_I2S_SendData	16	static
+SPI-test.c:48:10:SPI_I2S_ReceiveData	16	static
+SPI-test.c:58:12:SPI_I2S_GetFlagStatus	24	static

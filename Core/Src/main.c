@@ -23,7 +23,7 @@
 
 /* Private includes ----------------------------------------------------------*/
 /* USER CODE BEGIN Includes */
-
+#include "nrf24.h"
 /* USER CODE END Includes */
 
 /* Private typedef -----------------------------------------------------------*/
@@ -53,6 +53,14 @@ TIM_HandleTypeDef htim1;
 uint32_t watch1;
 uint32_t watch2;
 uint32_t watch3;
+
+//NRF24
+uint8_t nRF24_payloadTX[32]; //TX buffer
+uint8_t nRF24_payloadRX[32]; //RX buffer
+const uint8_t nRF24_ADDR[3] = {2, 3, 4 }; //Address
+uint32_t wifiOK;
+uint8_t RXstpaketov=0;
+
 /* USER CODE END PV */
 
 /* Private function prototypes -----------------------------------------------*/
@@ -113,22 +121,81 @@ int main(void)
   HAL_TIM_PWM_Start(&htim1, TIM_CHANNEL_3);
   HAL_TIM_PWM_Start(&htim1, TIM_CHANNEL_4);
 
+  //NRF24 INIT
+  SPI2->CR1|=SPI_CR1_SPE; //enable SPI
 
+  nRF24_CE_L();
+  wifiOK=nRF24_Check();
+
+  /*nRF24_Init(); //Default init
+
+  // Disable ShockBurst for all RX pipes
+  nRF24_DisableAA(0xFF);
+
+  // Set RF channel
+  nRF24_SetRFChannel(15); //2400Mhz + 15Mhz
+
+  // Set data rate
+  nRF24_SetDataRate(nRF24_DR_250kbps);
+
+  // Set CRC scheme
+  nRF24_SetCRCScheme(nRF24_CRC_2byte);
+
+  // Set address width, its common for all pipes (RX and TX)
+  nRF24_SetAddrWidth(3);
+
+  nRF24_SetAddr(nRF24_PIPETX, nRF24_ADDR); // program TX address
+
+  // Set TX power
+  nRF24_SetTXPower(nRF24_TXPWR_12dBm);
+
+  // Set operational mode (PTX == transmitter)
+  nRF24_SetOperationalMode(nRF24_MODE_TX);
+
+  // Clear any pending IRQ flags
+  nRF24_ClearIRQFlags();
+
+  // Wake the transceiver
+  nRF24_SetPowerMode(nRF24_PWR_UP);*/
 
   /* USER CODE END 2 */
 
   /* Infinite loop */
   /* USER CODE BEGIN WHILE */
+
+  //TEST GO RX MODE
+ /* nRF24_CE_H();//Enable RX
+  nRF24_Init();
+  nRF24_DisableAA(0xFF);
+  nRF24_SetRFChannel(15);//
+  nRF24_SetDataRate(nRF24_DR_250kbps);
+  nRF24_SetCRCScheme(nRF24_CRC_2byte);
+  nRF24_SetAddrWidth(3);
+  nRF24_SetAddr(nRF24_PIPE1, nRF24_ADDR); // program address for RX pipe #1
+  nRF24_SetRXPipe(nRF24_PIPE1, nRF24_AA_OFF, 5); // Auto-ACK: disabled, payload length: 5 bytes
+  nRF24_SetOperationalMode(nRF24_MODE_RX);
+  nRF24_ClearIRQFlags();
+  nRF24_SetPowerMode(nRF24_PWR_UP);*/
+
   while (1)
   {
     /* USER CODE END WHILE */
 
     /* USER CODE BEGIN 3 */
-	  LED1_ON;
+
 	  watch1++;
-	  HAL_Delay(250);
-	  LED1_OFF;
-	  HAL_Delay(250);
+
+	  if(wifiOK)LED1_ON;
+	  else LED1_OFF;
+
+	  /*if ((nRF24_GetStatus_RXFIFO() != nRF24_STATUS_RXFIFO_EMPTY) )
+	  {
+		watch2++;
+	    // Get a payload from the transceiver
+	    nRF24_ReadPayload(nRF24_payloadRX, &RXstpaketov);
+	    // Clear all pending IRQ flags
+	    nRF24_ClearIRQFlags();
+	  }*/
   }
   /* USER CODE END 3 */
 }
@@ -418,6 +485,12 @@ static void MX_GPIO_Init(void)
   GPIO_InitStruct.Pull = GPIO_NOPULL;
   GPIO_InitStruct.Speed = GPIO_SPEED_FREQ_LOW;
   HAL_GPIO_Init(NRF24_CE_GPIO_Port, &GPIO_InitStruct);
+
+  /*Configure GPIO pin : NRF24_IRQ_Pin */
+  GPIO_InitStruct.Pin = NRF24_IRQ_Pin;
+  GPIO_InitStruct.Mode = GPIO_MODE_INPUT;
+  GPIO_InitStruct.Pull = GPIO_NOPULL;
+  HAL_GPIO_Init(NRF24_IRQ_GPIO_Port, &GPIO_InitStruct);
 
   /*Configure GPIO pin : NRF24_CSN_Pin */
   GPIO_InitStruct.Pin = NRF24_CSN_Pin;

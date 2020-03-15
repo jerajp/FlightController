@@ -204,8 +204,6 @@ void SysTick_Handler(void)
   HAL_IncTick();
   /* USER CODE BEGIN SysTick_IRQn 1 */
 
-  watch1++;
-
   //Read Battery Voltage-----------------------------------------------
   HAL_ADC_PollForConversion(&hadc1,10);
   BattmV=HAL_ADC_GetValue(&hadc1)*BATTADCTOMV;
