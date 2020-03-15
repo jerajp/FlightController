@@ -1,2 +1,2 @@
 # FlightController
-Flight controll unit for quadcopter
+Flight control unit for quadcopter
