@@ -103,7 +103,7 @@ nRF24_TXResult nRF24_TransmitPacket(uint8_t *pBuf, uint8_t length);
 #define nRF24_MASK_ARC_CNT         (uint8_t)0x0F // Mask for ARC_CNT[3:0] bits in OBSERVE_TX register
 
 // Fake address to test transceiver presence (5 bytes long)
-#define nRF24_TEST_ADDR            "TESTR"//"nRF24"
+#define nRF24_TEST_ADDR            "TESTM"
 
 
 // Retransmit delay

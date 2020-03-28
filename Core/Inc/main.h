@@ -47,13 +47,16 @@ extern "C" {
 
 /* Exported macro ------------------------------------------------------------*/
 /* USER CODE BEGIN EM */
-#define LED1_ON  GPIOC->BSRR=0x00002000  	 // 1 << (13)
-#define LED1_OFF GPIOC->BSRR=0x20000000      // 1 << (16+13)
+#define LED1_OFF  GPIOC->BSRR=0x00002000  	 // 1 << (13)  HW LED is inverted
+#define LED1_ON GPIOC->BSRR=0x20000000       // 1 << (16+13)
 
 #define VDIVRESISTOR1	6800 //Battery voltage dividers
 #define VDIVRESISTOR2 	1475
 #define BATTADCTOMV	(float)( (float)((VDIVRESISTOR1 + VDIVRESISTOR2) * 3300) / (float)((VDIVRESISTOR2 * 4095)) )
 #define BATTAVERAGETIME 50 //50 msec average
+
+#define T_CLR_SCREEN 		"\x1b[2J"
+
 /* USER CODE END EM */
 
 void HAL_TIM_MspPostInit(TIM_HandleTypeDef *htim);

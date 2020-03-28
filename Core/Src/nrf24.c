@@ -6,14 +6,6 @@
 
 extern SPI_HandleTypeDef hspi2;
 
-//TEST
-extern uint32_t test5;
-extern uint32_t test6;
-extern uint32_t test7;
-extern uint32_t test8;
-extern uint32_t test9;
-extern uint32_t test10;
-
 //HW dependent
 //Ti ukazi vrinejo 128 stevila ko prejema v TX ??!
 //HAL_SPI_Transmit(&hspi2, senddata,1,10);//Send first element

@@ -24,6 +24,7 @@
 /* Private includes ----------------------------------------------------------*/
 /* USER CODE BEGIN Includes */
 #include "nrf24.h"
+#include <string.h>
 /* USER CODE END Includes */
 
 /* Private typedef -----------------------------------------------------------*/
@@ -49,17 +50,49 @@ SPI_HandleTypeDef hspi2;
 
 TIM_HandleTypeDef htim1;
 
+UART_HandleTypeDef huart1;
+
 /* USER CODE BEGIN PV */
 uint32_t watch1;
 uint32_t watch2;
 uint32_t watch3;
+uint32_t watch4;
+uint32_t watch5;
 
 //NRF24
 uint8_t nRF24_payloadTX[32]; //TX buffer
 uint8_t nRF24_payloadRX[32]; //RX buffer
-const uint8_t nRF24_ADDR[3] = {2, 3, 4 }; //Address
+const uint8_t nRF24_ADDR[3] = {5, 3, 5 }; //Address
 uint32_t wifiOK;
 uint8_t RXstpaketov=0;
+
+//NRF24 data
+uint32_t Ljoyupdown;
+uint32_t Ljoyleftright;
+uint32_t Djoyupdown;
+uint32_t Djoyleftright;
+uint32_t potenc1;
+uint32_t potenc2;
+uint32_t togg1;
+uint32_t togg2;
+uint32_t butt1;
+uint32_t butt2;
+uint32_t butt3;
+uint32_t butt4;
+uint32_t buttL;
+uint32_t buttD;
+
+//UART DEBUG
+char UartTXbuff0[100];
+char UartTXbuff1[100];
+char UartTXbuff2[100];
+char UartTXbuff3[100];
+char UartTXbuff4[100];
+char UartTXbuff5[100];
+char UartTXbuff6[100];
+char UartTXbuff7[100];
+char UartTXbuff8[100];
+char UartTXbuff9[100];
 
 /* USER CODE END PV */
 
@@ -70,6 +103,7 @@ static void MX_ADC1_Init(void);
 static void MX_I2C2_Init(void);
 static void MX_SPI2_Init(void);
 static void MX_TIM1_Init(void);
+static void MX_USART1_UART_Init(void);
 /* USER CODE BEGIN PFP */
 
 /* USER CODE END PFP */
@@ -111,6 +145,7 @@ int main(void)
   MX_I2C2_Init();
   MX_SPI2_Init();
   MX_TIM1_Init();
+  MX_USART1_UART_Init();
   /* USER CODE BEGIN 2 */
 
   HAL_ADCEx_Calibration_Start(&hadc1);
@@ -127,7 +162,7 @@ int main(void)
   nRF24_CE_L();
   wifiOK=nRF24_Check();
 
-  /*nRF24_Init(); //Default init
+  nRF24_Init(); //Default init
 
   // Disable ShockBurst for all RX pipes
   nRF24_DisableAA(0xFF);
@@ -146,36 +181,27 @@ int main(void)
 
   nRF24_SetAddr(nRF24_PIPETX, nRF24_ADDR); // program TX address
 
-  // Set TX power
-  nRF24_SetTXPower(nRF24_TXPWR_12dBm);
+  nRF24_SetRXPipe(nRF24_PIPE1, nRF24_AA_OFF, 7); // Auto-ACK: disabled
 
-  // Set operational mode (PTX == transmitter)
-  nRF24_SetOperationalMode(nRF24_MODE_TX);
+  // Set TX power
+  nRF24_SetTXPower(nRF24_TXPWR_18dBm);
+
+  // Set operational mode
+  nRF24_SetOperationalMode(nRF24_MODE_RX);
 
   // Clear any pending IRQ flags
   nRF24_ClearIRQFlags();
 
   // Wake the transceiver
-  nRF24_SetPowerMode(nRF24_PWR_UP);*/
+  nRF24_SetPowerMode(nRF24_PWR_UP);
+
+  nRF24_CE_H();//Enable RX
 
   /* USER CODE END 2 */
 
   /* Infinite loop */
   /* USER CODE BEGIN WHILE */
 
-  //TEST GO RX MODE
- /* nRF24_CE_H();//Enable RX
-  nRF24_Init();
-  nRF24_DisableAA(0xFF);
-  nRF24_SetRFChannel(15);//
-  nRF24_SetDataRate(nRF24_DR_250kbps);
-  nRF24_SetCRCScheme(nRF24_CRC_2byte);
-  nRF24_SetAddrWidth(3);
-  nRF24_SetAddr(nRF24_PIPE1, nRF24_ADDR); // program address for RX pipe #1
-  nRF24_SetRXPipe(nRF24_PIPE1, nRF24_AA_OFF, 5); // Auto-ACK: disabled, payload length: 5 bytes
-  nRF24_SetOperationalMode(nRF24_MODE_RX);
-  nRF24_ClearIRQFlags();
-  nRF24_SetPowerMode(nRF24_PWR_UP);*/
 
   while (1)
   {
@@ -183,19 +209,45 @@ int main(void)
 
     /* USER CODE BEGIN 3 */
 
-	  watch1++;
+	  HAL_Delay(100);
 
 	  if(wifiOK)LED1_ON;
 	  else LED1_OFF;
 
-	  /*if ((nRF24_GetStatus_RXFIFO() != nRF24_STATUS_RXFIFO_EMPTY) )
+	  sprintf(UartTXbuff0,T_CLR_SCREEN);
+	  HAL_UART_Transmit ( &huart1, UartTXbuff0, strlen( UartTXbuff0 ), 1 );
+
+	  if(wifiOK)
 	  {
-		watch2++;
-	    // Get a payload from the transceiver
-	    nRF24_ReadPayload(nRF24_payloadRX, &RXstpaketov);
-	    // Clear all pending IRQ flags
-	    nRF24_ClearIRQFlags();
-	  }*/
+		  sprintf(UartTXbuff1, "Wifi OK \n\r");
+	  }
+	  else sprintf(UartTXbuff1, "Wifi Fail \n\r");
+	  HAL_UART_Transmit ( &huart1, UartTXbuff1, strlen( UartTXbuff1 ), 1 );
+
+	  sprintf(UartTXbuff2, "L-UD=%u L-LR=%u \n\r",Ljoyupdown,Ljoyleftright);
+	  HAL_UART_Transmit ( &huart1, UartTXbuff2, strlen( UartTXbuff2 ), 1 );
+
+	  sprintf(UartTXbuff3, "D-UD=%u D-LR=%u \n\r",Djoyupdown,Djoyleftright);
+	  HAL_UART_Transmit ( &huart1, UartTXbuff3, strlen( UartTXbuff3 ), 1 );
+
+	  sprintf(UartTXbuff4, "Pot1=%u Pot2=%u \n\r",potenc1,potenc2);
+	  HAL_UART_Transmit ( &huart1, UartTXbuff4, strlen( UartTXbuff4 ), 1 );
+
+	  sprintf(UartTXbuff5, "Togg1=%u Togg2=%u \n\r",togg1,togg2);
+	  HAL_UART_Transmit ( &huart1, UartTXbuff5, strlen( UartTXbuff5 ), 1 );
+
+	  sprintf(UartTXbuff6, "Butt1=%u Butt2=%u Butt3=%u Butt4=%u \n\r",butt1,butt2,butt3,butt4);
+	  HAL_UART_Transmit ( &huart1, UartTXbuff6, strlen( UartTXbuff6 ), 1 );
+
+	  sprintf(UartTXbuff7, "ButtL=%u ButtD=%u \n\r",buttL,buttD);
+	  HAL_UART_Transmit ( &huart1, UartTXbuff7, strlen( UartTXbuff7 ), 1 );
+
+	  sprintf(UartTXbuff8, "watch1=%u watch2=%u \n\r",watch1,watch2 );
+	  HAL_UART_Transmit ( &huart1, UartTXbuff8, strlen( UartTXbuff8 ), 1 );
+
+	  sprintf(UartTXbuff9, "\n\r" );
+	  HAL_UART_Transmit ( &huart1, UartTXbuff9, strlen( UartTXbuff9 ), 1 );
+
   }
   /* USER CODE END 3 */
 }
@@ -346,7 +398,7 @@ static void MX_SPI2_Init(void)
   hspi2.Init.CLKPolarity = SPI_POLARITY_LOW;
   hspi2.Init.CLKPhase = SPI_PHASE_1EDGE;
   hspi2.Init.NSS = SPI_NSS_SOFT;
-  hspi2.Init.BaudRatePrescaler = SPI_BAUDRATEPRESCALER_2;
+  hspi2.Init.BaudRatePrescaler = SPI_BAUDRATEPRESCALER_16;
   hspi2.Init.FirstBit = SPI_FIRSTBIT_MSB;
   hspi2.Init.TIMode = SPI_TIMODE_DISABLE;
   hspi2.Init.CRCCalculation = SPI_CRCCALCULATION_DISABLE;
@@ -445,6 +497,39 @@ static void MX_TIM1_Init(void)
 
   /* USER CODE END TIM1_Init 2 */
   HAL_TIM_MspPostInit(&htim1);
+
+}
+
+/**
+  * @brief USART1 Initialization Function
+  * @param None
+  * @retval None
+  */
+static void MX_USART1_UART_Init(void)
+{
+
+  /* USER CODE BEGIN USART1_Init 0 */
+
+  /* USER CODE END USART1_Init 0 */
+
+  /* USER CODE BEGIN USART1_Init 1 */
+
+  /* USER CODE END USART1_Init 1 */
+  huart1.Instance = USART1;
+  huart1.Init.BaudRate = 921600;
+  huart1.Init.WordLength = UART_WORDLENGTH_8B;
+  huart1.Init.StopBits = UART_STOPBITS_1;
+  huart1.Init.Parity = UART_PARITY_NONE;
+  huart1.Init.Mode = UART_MODE_TX_RX;
+  huart1.Init.HwFlowCtl = UART_HWCONTROL_NONE;
+  huart1.Init.OverSampling = UART_OVERSAMPLING_16;
+  if (HAL_UART_Init(&huart1) != HAL_OK)
+  {
+    Error_Handler();
+  }
+  /* USER CODE BEGIN USART1_Init 2 */
+
+  /* USER CODE END USART1_Init 2 */
 
 }
 

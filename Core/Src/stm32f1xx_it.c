@@ -23,6 +23,7 @@
 #include "stm32f1xx_it.h"
 /* Private includes ----------------------------------------------------------*/
 /* USER CODE BEGIN Includes */
+#include "nrf24.h"
 /* USER CODE END Includes */
 
 /* Private typedef -----------------------------------------------------------*/
@@ -54,6 +55,23 @@ uint32_t BattmVSUM=0;
 uint32_t BattmVAVG=0;
 uint32_t batthistindx=0;
 uint32_t BAttmVhist[BATTAVERAGETIME];
+
+//NRF24 data
+extern uint32_t Ljoyupdown;
+extern uint32_t Ljoyleftright;
+extern uint32_t Djoyupdown;
+extern uint32_t Djoyleftright;
+extern uint32_t potenc1;
+extern uint32_t potenc2;
+extern uint32_t togg1;
+extern uint32_t togg2;
+extern uint32_t butt1;
+extern uint32_t butt2;
+extern uint32_t butt3;
+extern uint32_t butt4;
+extern uint32_t buttL;
+extern uint32_t buttD;
+
 /* USER CODE END PV */
 
 /* Private function prototypes -----------------------------------------------*/
@@ -76,6 +94,11 @@ extern uint16_t AdcDataArray[1];
 extern uint32_t watch1;
 extern uint32_t watch2;
 extern uint32_t watch3;
+
+extern uint8_t nRF24_payloadTX[32]; //TX buffer
+extern uint8_t nRF24_payloadRX[32]; //RX buffer
+extern uint8_t RXstpaketov;
+
 /* USER CODE END EV */
 
 /******************************************************************************/
@@ -229,6 +252,39 @@ void SysTick_Handler(void)
   __HAL_TIM_SET_COMPARE(&htim1, TIM_CHANNEL_2, PWM_Mot2);
   __HAL_TIM_SET_COMPARE(&htim1, TIM_CHANNEL_3, PWM_Mot3);
   __HAL_TIM_SET_COMPARE(&htim1, TIM_CHANNEL_4, PWM_Mot4);
+
+
+  //NRF24--------------------------------------------------------------------
+
+  if ((nRF24_GetStatus_RXFIFO() != nRF24_STATUS_RXFIFO_EMPTY) )
+  {
+    // Get a payload from the transceiver
+    nRF24_ReadPayload(nRF24_payloadRX, &RXstpaketov);
+    // Clear all pending IRQ flags
+    nRF24_ClearIRQFlags();
+
+    Ljoyupdown=nRF24_payloadRX[0];
+    Ljoyleftright=nRF24_payloadRX[1];
+    Djoyupdown=nRF24_payloadRX[2];
+    Djoyleftright=nRF24_payloadRX[3];
+    potenc1=nRF24_payloadRX[4];
+    potenc2=nRF24_payloadRX[5];
+
+    togg1=nRF24_payloadRX[6]>>7;
+    togg2=(nRF24_payloadRX[6] & 64 )>>6;
+    butt1=(nRF24_payloadRX[6] & 32 )>>5;
+	butt2=(nRF24_payloadRX[6] & 16 )>>4;
+	butt3=(nRF24_payloadRX[6] & 8 )>>3;
+	butt4=(nRF24_payloadRX[6] & 4 )>>2;
+	buttL=(nRF24_payloadRX[6] & 2 )>>1;
+	buttD=(nRF24_payloadRX[6] & 1 );
+
+
+    watch1++;
+  }
+
+
+  //-----------------------------------------------------
 
 
   /* USER CODE END SysTick_IRQn 1 */
