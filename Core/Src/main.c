@@ -179,7 +179,7 @@ int main(void)
   // Set address width, its common for all pipes (RX and TX)
   nRF24_SetAddrWidth(3);
 
-  nRF24_SetAddr(nRF24_PIPETX, nRF24_ADDR); // program TX address
+  nRF24_SetAddr(nRF24_PIPE1, nRF24_ADDR); //PROGRAM PIPE1!! for RX
 
   nRF24_SetRXPipe(nRF24_PIPE1, nRF24_AA_OFF, 7); // Auto-ACK: disabled
 
@@ -196,6 +196,12 @@ int main(void)
   nRF24_SetPowerMode(nRF24_PWR_UP);
 
   nRF24_CE_H();//Enable RX
+
+  //For TX!!
+  //nRF24_SetAddr(nRF24_PIPETX, nRF24_ADDR); // program address for RX pipe #1
+  //nRF24_SetOperationalMode(nRF24_MODE_TX);
+
+  ///-----------------
 
   /* USER CODE END 2 */
 
@@ -242,7 +248,7 @@ int main(void)
 	  sprintf(UartTXbuff7, "ButtL=%u ButtD=%u \n\r",buttL,buttD);
 	  HAL_UART_Transmit ( &huart1, UartTXbuff7, strlen( UartTXbuff7 ), 1 );
 
-	  sprintf(UartTXbuff8, "watch1=%u watch2=%u \n\r",watch1,watch2 );
+	  sprintf(UartTXbuff8, "w1=%u w2=%u  w3=%u w4=%u \n\r",watch1,watch2,watch3,watch4 );
 	  HAL_UART_Transmit ( &huart1, UartTXbuff8, strlen( UartTXbuff8 ), 1 );
 
 	  sprintf(UartTXbuff9, "\n\r" );

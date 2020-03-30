@@ -94,6 +94,7 @@ extern uint16_t AdcDataArray[1];
 extern uint32_t watch1;
 extern uint32_t watch2;
 extern uint32_t watch3;
+extern uint32_t watch4;
 
 extern uint8_t nRF24_payloadTX[32]; //TX buffer
 extern uint8_t nRF24_payloadRX[32]; //RX buffer
@@ -254,8 +255,11 @@ void SysTick_Handler(void)
   __HAL_TIM_SET_COMPARE(&htim1, TIM_CHANNEL_4, PWM_Mot4);
 
 
-  //NRF24--------------------------------------------------------------------
+  //Read IRQ
+  watch3=HAL_GPIO_ReadPin(NRF24_IRQ_GPIO_Port,NRF24_IRQ_Pin);
+  if(watch3==0)watch4++;
 
+  //NRF24--------------------------------------------------------------------
   if ((nRF24_GetStatus_RXFIFO() != nRF24_STATUS_RXFIFO_EMPTY) )
   {
     // Get a payload from the transceiver
@@ -279,11 +283,8 @@ void SysTick_Handler(void)
 	buttL=(nRF24_payloadRX[6] & 2 )>>1;
 	buttD=(nRF24_payloadRX[6] & 1 );
 
-
     watch1++;
   }
-
-
   //-----------------------------------------------------
 
 
