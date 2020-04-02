@@ -97,6 +97,8 @@ extern uint32_t watch3;
 extern uint32_t watch4;
 extern uint32_t test1;
 extern uint32_t test2;
+extern uint32_t test3;
+extern uint32_t test4;
 
 extern uint8_t nRF24_payloadTX[32]; //TX buffer
 extern uint8_t nRF24_payloadRX[32]; //RX buffer
@@ -292,6 +294,10 @@ void SysTick_Handler(void)
 
     watch1++;
 
+	test2=DWT->CYCCNT-test1;
+
+	test3=DWT->CYCCNT;
+
     //respond -TX
     nRF24_CE_L(); //DISABLE RX
     nRF24_SetAddr(nRF24_PIPETX, nRF24_ADDR); // program TX address
@@ -310,7 +316,7 @@ void SysTick_Handler(void)
 	nRF24_SetRXPipe(nRF24_PIPE1, nRF24_AA_OFF, 7); // Auto-ACK: disabled, payload length: 5 bytes
 	nRF24_SetOperationalMode(nRF24_MODE_RX);
 
-	test2=DWT->CYCCNT-test1;
+	test4=DWT->CYCCNT-test3;
 
   }
   //-----------------------------------------------------

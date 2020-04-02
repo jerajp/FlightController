@@ -60,6 +60,8 @@ uint32_t watch4;
 uint32_t watch5;
 uint32_t test1;
 uint32_t test2;
+uint32_t test3;
+uint32_t test4;
 
 
 //NRF24
@@ -245,7 +247,10 @@ int main(void)
 	  sprintf(UartTXbuff0, "w1=%u w2=%u  w3=%u w4=%u \n\r",watch1,watch2,watch3,watch4 );
 	  HAL_UART_Transmit ( &huart1, UartTXbuff0, strlen( UartTXbuff0 ), 1 );
 
-	  sprintf(UartTXbuff0, "%u \n\r",test2/72 );
+	  sprintf(UartTXbuff0, "RX time us=%u \n\r",test2/72 );
+	  HAL_UART_Transmit ( &huart1, UartTXbuff0, strlen( UartTXbuff0 ), 1 );
+
+	  sprintf(UartTXbuff0, "TX time us=%u \n\r",test4/72 );
 	  HAL_UART_Transmit ( &huart1, UartTXbuff0, strlen( UartTXbuff0 ), 1 );
 
 	  sprintf(UartTXbuff0, "\n\r" );
@@ -402,7 +407,7 @@ static void MX_SPI2_Init(void)
   hspi2.Init.CLKPolarity = SPI_POLARITY_LOW;
   hspi2.Init.CLKPhase = SPI_PHASE_1EDGE;
   hspi2.Init.NSS = SPI_NSS_SOFT;
-  hspi2.Init.BaudRatePrescaler = SPI_BAUDRATEPRESCALER_16;
+  hspi2.Init.BaudRatePrescaler = SPI_BAUDRATEPRESCALER_2;
   hspi2.Init.FirstBit = SPI_FIRSTBIT_MSB;
   hspi2.Init.TIMode = SPI_TIMODE_DISABLE;
   hspi2.Init.CRCCalculation = SPI_CRCCALCULATION_DISABLE;
