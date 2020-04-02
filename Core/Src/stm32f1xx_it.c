@@ -95,10 +95,13 @@ extern uint32_t watch1;
 extern uint32_t watch2;
 extern uint32_t watch3;
 extern uint32_t watch4;
+extern uint32_t test1;
+extern uint32_t test2;
 
 extern uint8_t nRF24_payloadTX[32]; //TX buffer
 extern uint8_t nRF24_payloadRX[32]; //RX buffer
 extern uint8_t RXstpaketov;
+extern const uint8_t nRF24_ADDR[3]; //Address
 
 /* USER CODE END EV */
 
@@ -256,12 +259,16 @@ void SysTick_Handler(void)
 
 
   //Read IRQ
-  watch3=HAL_GPIO_ReadPin(NRF24_IRQ_GPIO_Port,NRF24_IRQ_Pin);
-  if(watch3==0)watch4++;
+  //watch3=HAL_GPIO_ReadPin(NRF24_IRQ_GPIO_Port,NRF24_IRQ_Pin);
+  //if(watch3==0)watch4++;
+
+  watch3++;
 
   //NRF24--------------------------------------------------------------------
   if ((nRF24_GetStatus_RXFIFO() != nRF24_STATUS_RXFIFO_EMPTY) )
   {
+	 test1=DWT->CYCCNT;
+
     // Get a payload from the transceiver
     nRF24_ReadPayload(nRF24_payloadRX, &RXstpaketov);
     // Clear all pending IRQ flags
@@ -284,6 +291,27 @@ void SysTick_Handler(void)
 	buttD=(nRF24_payloadRX[6] & 1 );
 
     watch1++;
+
+    //respond -TX
+    nRF24_CE_L(); //DISABLE RX
+    nRF24_SetAddr(nRF24_PIPETX, nRF24_ADDR); // program TX address
+    nRF24_SetOperationalMode(nRF24_MODE_TX);
+
+	//SEND DATA TO RC remote
+	nRF24_payloadTX[0] = (uint8_t)(BattmVAVG & 0xFF);
+	nRF24_payloadTX[1] = (uint8_t)((BattmVAVG & 0xFF00)>>8);
+
+	// Transmit a packet
+	nRF24_TransmitPacket(nRF24_payloadTX, 2);
+
+	//back to RX
+	nRF24_CE_H();//Enable RX
+	nRF24_SetAddr(nRF24_PIPE1, nRF24_ADDR); // program address for RX pipe #1
+	nRF24_SetRXPipe(nRF24_PIPE1, nRF24_AA_OFF, 7); // Auto-ACK: disabled, payload length: 5 bytes
+	nRF24_SetOperationalMode(nRF24_MODE_RX);
+
+	test2=DWT->CYCCNT-test1;
+
   }
   //-----------------------------------------------------
 

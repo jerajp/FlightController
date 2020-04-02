@@ -58,6 +58,9 @@ uint32_t watch2;
 uint32_t watch3;
 uint32_t watch4;
 uint32_t watch5;
+uint32_t test1;
+uint32_t test2;
+
 
 //NRF24
 uint8_t nRF24_payloadTX[32]; //TX buffer
@@ -84,16 +87,7 @@ uint32_t buttD;
 
 //UART DEBUG
 char UartTXbuff0[100];
-char UartTXbuff1[100];
-char UartTXbuff2[100];
-char UartTXbuff3[100];
-char UartTXbuff4[100];
-char UartTXbuff5[100];
-char UartTXbuff6[100];
-char UartTXbuff7[100];
-char UartTXbuff8[100];
-char UartTXbuff9[100];
-
+extern uint32_t BattmVAVG;
 /* USER CODE END PV */
 
 /* Private function prototypes -----------------------------------------------*/
@@ -120,6 +114,10 @@ static void MX_USART1_UART_Init(void);
 int main(void)
 {
   /* USER CODE BEGIN 1 */
+
+	//test timings DWT counter
+	DWT->CYCCNT = 0;
+	DWT->CTRL |= 1;
 
   /* USER CODE END 1 */
 
@@ -184,7 +182,7 @@ int main(void)
   nRF24_SetRXPipe(nRF24_PIPE1, nRF24_AA_OFF, 7); // Auto-ACK: disabled
 
   // Set TX power
-  nRF24_SetTXPower(nRF24_TXPWR_18dBm);
+  nRF24_SetTXPower(nRF24_TXPWR_0dBm);
 
   // Set operational mode
   nRF24_SetOperationalMode(nRF24_MODE_RX);
@@ -196,10 +194,6 @@ int main(void)
   nRF24_SetPowerMode(nRF24_PWR_UP);
 
   nRF24_CE_H();//Enable RX
-
-  //For TX!!
-  //nRF24_SetAddr(nRF24_PIPETX, nRF24_ADDR); // program address for RX pipe #1
-  //nRF24_SetOperationalMode(nRF24_MODE_TX);
 
   ///-----------------
 
@@ -225,34 +219,38 @@ int main(void)
 
 	  if(wifiOK)
 	  {
-		  sprintf(UartTXbuff1, "Wifi OK \n\r");
+		  sprintf(UartTXbuff0, "Wifi OK \n\r");
 	  }
-	  else sprintf(UartTXbuff1, "Wifi Fail \n\r");
-	  HAL_UART_Transmit ( &huart1, UartTXbuff1, strlen( UartTXbuff1 ), 1 );
+	  else sprintf(UartTXbuff0, "Wifi Fail \n\r");
+	  HAL_UART_Transmit ( &huart1, UartTXbuff0, strlen( UartTXbuff0 ), 1 );
 
-	  sprintf(UartTXbuff2, "L-UD=%u L-LR=%u \n\r",Ljoyupdown,Ljoyleftright);
-	  HAL_UART_Transmit ( &huart1, UartTXbuff2, strlen( UartTXbuff2 ), 1 );
+	  sprintf(UartTXbuff0, "L-UD=%u L-LR=%u \n\r",Ljoyupdown,Ljoyleftright);
+	  HAL_UART_Transmit ( &huart1, UartTXbuff0, strlen( UartTXbuff0 ), 1 );
 
-	  sprintf(UartTXbuff3, "D-UD=%u D-LR=%u \n\r",Djoyupdown,Djoyleftright);
-	  HAL_UART_Transmit ( &huart1, UartTXbuff3, strlen( UartTXbuff3 ), 1 );
+	  sprintf(UartTXbuff0, "D-UD=%u D-LR=%u \n\r",Djoyupdown,Djoyleftright);
+	  HAL_UART_Transmit ( &huart1, UartTXbuff0, strlen( UartTXbuff0 ), 1 );
 
-	  sprintf(UartTXbuff4, "Pot1=%u Pot2=%u \n\r",potenc1,potenc2);
-	  HAL_UART_Transmit ( &huart1, UartTXbuff4, strlen( UartTXbuff4 ), 1 );
+	  sprintf(UartTXbuff0, "Pot1=%u Pot2=%u \n\r",potenc1,potenc2);
+	  HAL_UART_Transmit ( &huart1, UartTXbuff0, strlen( UartTXbuff0 ), 1 );
 
-	  sprintf(UartTXbuff5, "Togg1=%u Togg2=%u \n\r",togg1,togg2);
-	  HAL_UART_Transmit ( &huart1, UartTXbuff5, strlen( UartTXbuff5 ), 1 );
+	  sprintf(UartTXbuff0, "Togg1=%u Togg2=%u \n\r",togg1,togg2);
+	  HAL_UART_Transmit ( &huart1, UartTXbuff0, strlen( UartTXbuff0 ), 1 );
 
-	  sprintf(UartTXbuff6, "Butt1=%u Butt2=%u Butt3=%u Butt4=%u \n\r",butt1,butt2,butt3,butt4);
-	  HAL_UART_Transmit ( &huart1, UartTXbuff6, strlen( UartTXbuff6 ), 1 );
+	  sprintf(UartTXbuff0, "Butt1=%u Butt2=%u Butt3=%u Butt4=%u \n\r",butt1,butt2,butt3,butt4);
+	  HAL_UART_Transmit ( &huart1, UartTXbuff0, strlen( UartTXbuff0 ), 1 );
 
-	  sprintf(UartTXbuff7, "ButtL=%u ButtD=%u \n\r",buttL,buttD);
-	  HAL_UART_Transmit ( &huart1, UartTXbuff7, strlen( UartTXbuff7 ), 1 );
+	  sprintf(UartTXbuff0, "ButtL=%u ButtD=%u \n\r",buttL,buttD);
+	  HAL_UART_Transmit ( &huart1, UartTXbuff0, strlen( UartTXbuff0 ), 1 );
 
-	  sprintf(UartTXbuff8, "w1=%u w2=%u  w3=%u w4=%u \n\r",watch1,watch2,watch3,watch4 );
-	  HAL_UART_Transmit ( &huart1, UartTXbuff8, strlen( UartTXbuff8 ), 1 );
+	  sprintf(UartTXbuff0, "w1=%u w2=%u  w3=%u w4=%u \n\r",watch1,watch2,watch3,watch4 );
+	  HAL_UART_Transmit ( &huart1, UartTXbuff0, strlen( UartTXbuff0 ), 1 );
 
-	  sprintf(UartTXbuff9, "\n\r" );
-	  HAL_UART_Transmit ( &huart1, UartTXbuff9, strlen( UartTXbuff9 ), 1 );
+	  sprintf(UartTXbuff0, "%u \n\r",test2/72 );
+	  HAL_UART_Transmit ( &huart1, UartTXbuff0, strlen( UartTXbuff0 ), 1 );
+
+	  sprintf(UartTXbuff0, "\n\r" );
+	  HAL_UART_Transmit ( &huart1, UartTXbuff0, strlen( UartTXbuff0 ), 1 );
+
 
   }
   /* USER CODE END 3 */
