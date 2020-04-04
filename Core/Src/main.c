@@ -87,6 +87,8 @@ uint32_t butt4;
 uint32_t buttL;
 uint32_t buttD;
 
+uint32_t MainInitDoneFlag=0;
+
 //UART DEBUG
 char UartTXbuff0[100];
 extern uint32_t BattmVAVG;
@@ -118,6 +120,7 @@ int main(void)
   /* USER CODE BEGIN 1 */
 
 	//test timings DWT counter
+	CoreDebug->DEMCR |= CoreDebug_DEMCR_TRCENA_Msk;
 	DWT->CYCCNT = 0;
 	DWT->CTRL |= 1;
 
@@ -159,7 +162,8 @@ int main(void)
   //NRF24 INIT
   SPI2->CR1|=SPI_CR1_SPE; //enable SPI
 
-  nRF24_CE_L();
+  nRF24_CE_L(); // RX/TX disabled
+
   wifiOK=nRF24_Check();
 
   nRF24_Init(); //Default init
@@ -174,7 +178,7 @@ int main(void)
   nRF24_SetDataRate(nRF24_DR_250kbps);
 
   // Set CRC scheme
-  nRF24_SetCRCScheme(nRF24_CRC_2byte);
+  nRF24_SetCRCScheme(nRF24_CRC_1byte);
 
   // Set address width, its common for all pipes (RX and TX)
   nRF24_SetAddrWidth(3);
@@ -183,8 +187,11 @@ int main(void)
 
   nRF24_SetRXPipe(nRF24_PIPE1, nRF24_AA_OFF, 7); // Auto-ACK: disabled
 
+
+  nRF24_SetAddr(nRF24_PIPETX, nRF24_ADDR);
+
   // Set TX power
-  nRF24_SetTXPower(nRF24_TXPWR_0dBm);
+  nRF24_SetTXPower(nRF24_TXPWR_6dBm);
 
   // Set operational mode
   nRF24_SetOperationalMode(nRF24_MODE_RX);
@@ -197,6 +204,7 @@ int main(void)
 
   nRF24_CE_H();//Enable RX
 
+  MainInitDoneFlag=1;
   ///-----------------
 
   /* USER CODE END 2 */
@@ -244,13 +252,10 @@ int main(void)
 	  sprintf(UartTXbuff0, "ButtL=%u ButtD=%u \n\r",buttL,buttD);
 	  HAL_UART_Transmit ( &huart1, UartTXbuff0, strlen( UartTXbuff0 ), 1 );
 
-	  sprintf(UartTXbuff0, "w1=%u w2=%u  w3=%u w4=%u \n\r",watch1,watch2,watch3,watch4 );
+	  sprintf(UartTXbuff0, "MSG RECV=%u \n\r",watch1);
 	  HAL_UART_Transmit ( &huart1, UartTXbuff0, strlen( UartTXbuff0 ), 1 );
 
-	  sprintf(UartTXbuff0, "RX time us=%u \n\r",test2/72 );
-	  HAL_UART_Transmit ( &huart1, UartTXbuff0, strlen( UartTXbuff0 ), 1 );
-
-	  sprintf(UartTXbuff0, "TX time us=%u \n\r",test4/72 );
+	  sprintf(UartTXbuff0, "MSG SEND=%u \n\r",watch2);
 	  HAL_UART_Transmit ( &huart1, UartTXbuff0, strlen( UartTXbuff0 ), 1 );
 
 	  sprintf(UartTXbuff0, "\n\r" );
@@ -407,10 +412,10 @@ static void MX_SPI2_Init(void)
   hspi2.Init.CLKPolarity = SPI_POLARITY_LOW;
   hspi2.Init.CLKPhase = SPI_PHASE_1EDGE;
   hspi2.Init.NSS = SPI_NSS_SOFT;
-  hspi2.Init.BaudRatePrescaler = SPI_BAUDRATEPRESCALER_2;
+  hspi2.Init.BaudRatePrescaler = SPI_BAUDRATEPRESCALER_4;
   hspi2.Init.FirstBit = SPI_FIRSTBIT_MSB;
   hspi2.Init.TIMode = SPI_TIMODE_DISABLE;
-  hspi2.Init.CRCCalculation = SPI_CRCCALCULATION_DISABLE;
+  hspi2.Init.CRCCalculation = SPI_CRCCALCULATION_ENABLE;
   hspi2.Init.CRCPolynomial = 10;
   if (HAL_SPI_Init(&hspi2) != HAL_OK)
   {

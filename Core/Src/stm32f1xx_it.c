@@ -56,6 +56,10 @@ uint32_t BattmVAVG=0;
 uint32_t batthistindx=0;
 uint32_t BAttmVhist[BATTAVERAGETIME];
 
+uint32_t SendBackFlag=0;
+uint32_t RXactiveFlag=1;
+uint32_t BackTimer=0;
+
 //NRF24 data
 extern uint32_t Ljoyupdown;
 extern uint32_t Ljoyleftright;
@@ -105,6 +109,7 @@ extern uint8_t nRF24_payloadRX[32]; //RX buffer
 extern uint8_t RXstpaketov;
 extern const uint8_t nRF24_ADDR[3]; //Address
 
+extern uint32_t MainInitDoneFlag;
 /* USER CODE END EV */
 
 /******************************************************************************/
@@ -260,65 +265,85 @@ void SysTick_Handler(void)
   __HAL_TIM_SET_COMPARE(&htim1, TIM_CHANNEL_4, PWM_Mot4);
 
 
-  //Read IRQ
-  //watch3=HAL_GPIO_ReadPin(NRF24_IRQ_GPIO_Port,NRF24_IRQ_Pin);
-  //if(watch3==0)watch4++;
-
-  watch3++;
-
-  //NRF24--------------------------------------------------------------------
-  if ((nRF24_GetStatus_RXFIFO() != nRF24_STATUS_RXFIFO_EMPTY) )
+   //NRF24--------------------------------------------------------------------
+  if(MainInitDoneFlag)
   {
-	 test1=DWT->CYCCNT;
+	//Ping for RX data when RXflag is SET
+	if(RXactiveFlag)
+	{
+		if ((nRF24_GetStatus_RXFIFO() != nRF24_STATUS_RXFIFO_EMPTY) )
+		{
+			watch1++;
 
-    // Get a payload from the transceiver
-    nRF24_ReadPayload(nRF24_payloadRX, &RXstpaketov);
-    // Clear all pending IRQ flags
-    nRF24_ClearIRQFlags();
+			// Get a payload from the transceiver
+			nRF24_ReadPayload(nRF24_payloadRX, &RXstpaketov);
 
-    Ljoyupdown=nRF24_payloadRX[0];
-    Ljoyleftright=nRF24_payloadRX[1];
-    Djoyupdown=nRF24_payloadRX[2];
-    Djoyleftright=nRF24_payloadRX[3];
-    potenc1=nRF24_payloadRX[4];
-    potenc2=nRF24_payloadRX[5];
+			// Clear all pending IRQ flags
+			nRF24_ClearIRQFlags();
 
-    togg1=nRF24_payloadRX[6]>>7;
-    togg2=(nRF24_payloadRX[6] & 64 )>>6;
-    butt1=(nRF24_payloadRX[6] & 32 )>>5;
-	butt2=(nRF24_payloadRX[6] & 16 )>>4;
-	butt3=(nRF24_payloadRX[6] & 8 )>>3;
-	butt4=(nRF24_payloadRX[6] & 4 )>>2;
-	buttL=(nRF24_payloadRX[6] & 2 )>>1;
-	buttD=(nRF24_payloadRX[6] & 1 );
+			Ljoyupdown=nRF24_payloadRX[0];
+			Ljoyleftright=nRF24_payloadRX[1];
+			Djoyupdown=nRF24_payloadRX[2];
+			Djoyleftright=nRF24_payloadRX[3];
+			potenc1=nRF24_payloadRX[4];
+			potenc2=nRF24_payloadRX[5];
 
-    watch1++;
+			togg1=nRF24_payloadRX[6]>>7;
+			togg2=(nRF24_payloadRX[6] & 64 )>>6;
+			butt1=(nRF24_payloadRX[6] & 32 )>>5;
+			butt2=(nRF24_payloadRX[6] & 16 )>>4;
+			butt3=(nRF24_payloadRX[6] & 8 )>>3;
+			butt4=(nRF24_payloadRX[6] & 4 )>>2;
+			buttL=(nRF24_payloadRX[6] & 2 )>>1;
+			buttD=(nRF24_payloadRX[6] & 1 );
 
-	test2=DWT->CYCCNT-test1;
+			SendBackFlag=1;
+			RXactiveFlag=0;
+		}
+	}
 
-	test3=DWT->CYCCNT;
+    if(SendBackFlag)//Config between RX-TX
+    {
+    	BackTimer++;
 
-    //respond -TX
-    nRF24_CE_L(); //DISABLE RX
-    nRF24_SetAddr(nRF24_PIPETX, nRF24_ADDR); // program TX address
-    nRF24_SetOperationalMode(nRF24_MODE_TX);
+    	switch(BackTimer)
+    	{
+	 	 case 1:
+	 	 	 	 {
+	 	 	 		//SET TX MODE
+	 	 	 		nRF24_CE_L();//END RX
+					nRF24_SetOperationalMode(nRF24_MODE_TX);
+	 	 	 	 }break;
 
-	//SEND DATA TO RC remote
-	nRF24_payloadTX[0] = (uint8_t)(BattmVAVG & 0xFF);
-	nRF24_payloadTX[1] = (uint8_t)((BattmVAVG & 0xFF00)>>8);
+	 	 case 4:
+	 	 	 	 {
+	 	 			//SEND DATA TO RC remote
+	 	 			nRF24_payloadTX[0] = (uint8_t)(BattmVAVG & 0xFF);
+	 	 			nRF24_payloadTX[1] = (uint8_t)((BattmVAVG & 0xFF00)>>8);
 
-	// Transmit a packet
-	nRF24_TransmitPacket(nRF24_payloadTX, 2);
+	 	 			// Transmit a packet
+	 	 			nRF24_TransmitPacket(nRF24_payloadTX, 2);
+	 	 			watch2++;
+	 	 	 	 }break;
 
-	//back to RX
-	nRF24_CE_H();//Enable RX
-	nRF24_SetAddr(nRF24_PIPE1, nRF24_ADDR); // program address for RX pipe #1
-	nRF24_SetRXPipe(nRF24_PIPE1, nRF24_AA_OFF, 7); // Auto-ACK: disabled, payload length: 5 bytes
-	nRF24_SetOperationalMode(nRF24_MODE_RX);
+    	case 5:
+    			{
+	 	 	 		//SET RX MODE
+	 				nRF24_SetOperationalMode(nRF24_MODE_RX);
+	 				nRF24_CE_H(); //Start RX)
 
-	test4=DWT->CYCCNT-test3;
+	 	 	 	 }break;
 
-  }
+    	case 6:
+				{
+    				RXactiveFlag=1; //start pinging for data
+    				SendBackFlag=0; //Exit routine
+    				BackTimer=0;	//reset counter
+
+				}break;
+    	}
+    }//End Send Back config routine
+  }//End NRF24 routine
   //-----------------------------------------------------
 
 
