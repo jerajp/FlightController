@@ -92,6 +92,11 @@ uint32_t MainInitDoneFlag=0;
 //UART DEBUG
 char UartTXbuff0[100];
 extern uint32_t BattmVAVG;
+
+//MOTOR
+uint32_t MotorStatus=0;
+
+
 /* USER CODE END PV */
 
 /* Private function prototypes -----------------------------------------------*/
@@ -160,6 +165,8 @@ int main(void)
   HAL_TIM_PWM_Start(&htim1, TIM_CHANNEL_4);
 
   //NRF24 INIT
+  HAL_Delay(500);//wait for stable power
+
   SPI2->CR1|=SPI_CR1_SPE; //enable SPI
 
   nRF24_CE_L(); // RX/TX disabled

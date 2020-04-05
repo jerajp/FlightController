@@ -60,6 +60,12 @@ uint32_t SendBackFlag=0;
 uint32_t RXactiveFlag=1;
 uint32_t BackTimer=0;
 
+uint32_t LoopCounter;
+uint32_t MSGprerSecond;
+uint32_t MSGcount;
+uint32_t ConnectWeakFlag;
+uint32_t MSGLowCount;
+
 //NRF24 data
 extern uint32_t Ljoyupdown;
 extern uint32_t Ljoyleftright;
@@ -110,6 +116,8 @@ extern uint8_t RXstpaketov;
 extern const uint8_t nRF24_ADDR[3]; //Address
 
 extern uint32_t MainInitDoneFlag;
+
+extern uint32_t MotorStatus;
 /* USER CODE END EV */
 
 /******************************************************************************/
@@ -257,12 +265,34 @@ void SysTick_Handler(void)
 
    BattmVAVG=BattmVSUM/(BATTAVERAGETIME);//------------------------------
 
+   //testing
+   if(togg1==1 && ConnectWeakFlag==0)MotorStatus=1;
+   else MotorStatus=0;
+
+   if(MotorStatus==0)
+   {
+	   PWM_Mot1=1000;
+	   PWM_Mot2=1000;
+	   PWM_Mot3=1000;
+	   PWM_Mot4=1000;
+   }
+   else if(MotorStatus==1)
+   {
+	   PWM_Mot1=1000 + potenc1*10;
+	   PWM_Mot2=1000 + potenc1*10;
+	   PWM_Mot3=1000 + potenc1*10;
+	   PWM_Mot4=1000 + potenc1*10;
+
+   }
 
   //SET PWM CHANNELS-----------------------------------------------------
   __HAL_TIM_SET_COMPARE(&htim1, TIM_CHANNEL_1, PWM_Mot1);
   __HAL_TIM_SET_COMPARE(&htim1, TIM_CHANNEL_2, PWM_Mot2);
   __HAL_TIM_SET_COMPARE(&htim1, TIM_CHANNEL_3, PWM_Mot3);
   __HAL_TIM_SET_COMPARE(&htim1, TIM_CHANNEL_4, PWM_Mot4);
+
+
+
 
 
    //NRF24--------------------------------------------------------------------
@@ -299,6 +329,8 @@ void SysTick_Handler(void)
 
 			SendBackFlag=1;
 			RXactiveFlag=0;
+
+			MSGcount++;
 		}
 	}
 
@@ -345,7 +377,21 @@ void SysTick_Handler(void)
     }//End Send Back config routine
   }//End NRF24 routine
   //-----------------------------------------------------
+  LoopCounter++;
+  if(LoopCounter==1000)
+  {
+  		MSGprerSecond=MSGcount;
 
+  		if(MSGcount<MINMSGPERSEC)
+  		{
+  			MSGLowCount++;
+  			ConnectWeakFlag=1;
+  		}
+  		 else  ConnectWeakFlag=0;
+
+  		MSGcount=0;
+  		LoopCounter=0;
+  }
 
   /* USER CODE END SysTick_IRQn 1 */
 }

@@ -54,7 +54,7 @@ extern "C" {
 #define VDIVRESISTOR2 	1475
 #define BATTADCTOMV	(float)( (float)((VDIVRESISTOR1 + VDIVRESISTOR2) * 3300) / (float)((VDIVRESISTOR2 * 4095)) )
 #define BATTAVERAGETIME 50 //50 msec average
-
+#define  MINMSGPERSEC   10
 #define T_CLR_SCREEN 		"\x1b[2J"
 
 /* USER CODE END EM */
