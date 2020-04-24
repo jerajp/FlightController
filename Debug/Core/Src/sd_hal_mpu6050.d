@@ -1,4 +1,5 @@
-Drivers/system_stm32f1xx.o: ../Drivers/system_stm32f1xx.c \
+Core/Src/sd_hal_mpu6050.o: ../Core/Src/sd_hal_mpu6050.c \
+ ../Core/Inc/sd_hal_mpu6050.h \
  ../Drivers/CMSIS/Device/ST/STM32F1xx/Include/stm32f1xx.h \
  ../Drivers/CMSIS/Device/ST/STM32F1xx/Include/stm32f103xb.h \
  ../Drivers/CMSIS/Include/core_cm3.h \
@@ -27,6 +28,8 @@ Drivers/system_stm32f1xx.o: ../Drivers/system_stm32f1xx.c \
  ../Drivers/STM32F1xx_HAL_Driver/Inc/stm32f1xx_hal_tim.h \
  ../Drivers/STM32F1xx_HAL_Driver/Inc/stm32f1xx_hal_tim_ex.h \
  ../Drivers/STM32F1xx_HAL_Driver/Inc/stm32f1xx_hal_uart.h
+
+../Core/Inc/sd_hal_mpu6050.h:
 
 ../Drivers/CMSIS/Device/ST/STM32F1xx/Include/stm32f1xx.h:
 

@@ -24,6 +24,7 @@
 /* Private includes ----------------------------------------------------------*/
 /* USER CODE BEGIN Includes */
 #include "nrf24.h"
+#include "sd_hal_mpu6050.h"
 #include <string.h>
 /* USER CODE END Includes */
 
@@ -86,6 +87,14 @@ uint32_t butt3;
 uint32_t butt4;
 uint32_t buttL;
 uint32_t buttD;
+
+//MPU6050
+SD_MPU6050_Result MPU6050result ;
+SD_MPU6050 mpuDataStr;
+int16_t GyroXOff;
+int16_t GyroYOff;
+int16_t GyroZoff;
+
 
 uint32_t MainInitDoneFlag=0;
 
@@ -211,6 +220,11 @@ int main(void)
 
   nRF24_CE_H();//Enable RX
 
+  //MPU6050 INIT
+  MPU6050result=SD_MPU6050_Init(&hi2c2,&mpuDataStr,SD_MPU6050_Device_0,SD_MPU6050_Accelerometer_2G,SD_MPU6050_Gyroscope_500s );
+
+
+
   MainInitDoneFlag=1;
   ///-----------------
 
@@ -265,8 +279,31 @@ int main(void)
 	  sprintf(UartTXbuff0, "MSG SEND=%u \n\r",watch2);
 	  HAL_UART_Transmit ( &huart1, UartTXbuff0, strlen( UartTXbuff0 ), 1 );
 
+	  //MPU 6050
+	  sprintf(UartTXbuff0, "GYRO X RAW=%d \n\r",mpuDataStr.Gyroscope_X);
+	  HAL_UART_Transmit ( &huart1, UartTXbuff0, strlen( UartTXbuff0 ), 1 );
+
+	  sprintf(UartTXbuff0, "GYRO Y RAW=%d \n\r",mpuDataStr.Gyroscope_Y);
+	  HAL_UART_Transmit ( &huart1, UartTXbuff0, strlen( UartTXbuff0 ), 1 );
+
+	  sprintf(UartTXbuff0, "GYRO Z RAW=%d \n\r",mpuDataStr.Gyroscope_Z);
+	  HAL_UART_Transmit ( &huart1, UartTXbuff0, strlen( UartTXbuff0 ), 1 );
+
+	  sprintf(UartTXbuff0, "ACC X RAW=%d \n\r",mpuDataStr.Accelerometer_X);
+	  HAL_UART_Transmit ( &huart1, UartTXbuff0, strlen( UartTXbuff0 ), 1 );
+
+	  sprintf(UartTXbuff0, "ACC Y RAW=%d \n\r",mpuDataStr.Accelerometer_Y);
+	  HAL_UART_Transmit ( &huart1, UartTXbuff0, strlen( UartTXbuff0 ), 1 );
+
+	  sprintf(UartTXbuff0, "ACC Z RAW=%d \n\r",mpuDataStr.Accelerometer_Z);
+	  HAL_UART_Transmit ( &huart1, UartTXbuff0, strlen( UartTXbuff0 ), 1 );
+
 	  sprintf(UartTXbuff0, "\n\r" );
 	  HAL_UART_Transmit ( &huart1, UartTXbuff0, strlen( UartTXbuff0 ), 1 );
+
+	  //MPU 6050
+	  SD_MPU6050_ReadGyroscope(&hi2c2,&mpuDataStr);
+	  SD_MPU6050_ReadAccelerometer(&hi2c2,&mpuDataStr);
 
 
   }
@@ -378,7 +415,7 @@ static void MX_I2C2_Init(void)
 
   /* USER CODE END I2C2_Init 1 */
   hi2c2.Instance = I2C2;
-  hi2c2.Init.ClockSpeed = 100000;
+  hi2c2.Init.ClockSpeed = 400000;
   hi2c2.Init.DutyCycle = I2C_DUTYCYCLE_2;
   hi2c2.Init.OwnAddress1 = 0;
   hi2c2.Init.AddressingMode = I2C_ADDRESSINGMODE_7BIT;
@@ -422,7 +459,7 @@ static void MX_SPI2_Init(void)
   hspi2.Init.BaudRatePrescaler = SPI_BAUDRATEPRESCALER_4;
   hspi2.Init.FirstBit = SPI_FIRSTBIT_MSB;
   hspi2.Init.TIMode = SPI_TIMODE_DISABLE;
-  hspi2.Init.CRCCalculation = SPI_CRCCALCULATION_ENABLE;
+  hspi2.Init.CRCCalculation = SPI_CRCCALCULATION_DISABLE;
   hspi2.Init.CRCPolynomial = 10;
   if (HAL_SPI_Init(&hspi2) != HAL_OK)
   {

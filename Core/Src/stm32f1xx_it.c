@@ -24,6 +24,7 @@
 /* Private includes ----------------------------------------------------------*/
 /* USER CODE BEGIN Includes */
 #include "nrf24.h"
+#include "sd_hal_mpu6050.h"
 /* USER CODE END Includes */
 
 /* Private typedef -----------------------------------------------------------*/
@@ -82,6 +83,9 @@ extern uint32_t butt4;
 extern uint32_t buttL;
 extern uint32_t buttD;
 
+//MPU 6050
+extern SD_MPU6050 mpuDataStr;
+
 /* USER CODE END PV */
 
 /* Private function prototypes -----------------------------------------------*/
@@ -99,6 +103,7 @@ extern uint32_t buttD;
 /* USER CODE BEGIN EV */
 extern TIM_HandleTypeDef htim1;
 extern ADC_HandleTypeDef hadc1;
+extern I2C_HandleTypeDef hi2c2;
 extern uint16_t AdcDataArray[1];
 
 extern uint32_t watch1;
@@ -392,6 +397,8 @@ void SysTick_Handler(void)
   		MSGcount=0;
   		LoopCounter=0;
   }
+
+
 
   /* USER CODE END SysTick_IRQn 1 */
 }
