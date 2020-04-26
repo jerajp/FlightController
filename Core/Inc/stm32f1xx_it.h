@@ -56,7 +56,12 @@ void SVC_Handler(void);
 void DebugMon_Handler(void);
 void PendSV_Handler(void);
 void SysTick_Handler(void);
+void TIM2_IRQHandler(void);
 /* USER CODE BEGIN EFP */
+
+extern uint32_t BattmVAVG;
+extern float AnglePitch;
+extern float AngleRoll;
 
 /* USER CODE END EFP */
 

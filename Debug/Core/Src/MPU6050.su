@@ -1,0 +1,4 @@
+MPU6050.c:19:16:MPU6050_check	40	static
+MPU6050.c:31:6:MPU6050_init	40	static
+MPU6050.c:49:6:MPU6050_accread	40	static
+MPU6050.c:60:6:MPU6050_gyroread	40	static

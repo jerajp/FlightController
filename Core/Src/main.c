@@ -24,8 +24,10 @@
 /* Private includes ----------------------------------------------------------*/
 /* USER CODE BEGIN Includes */
 #include "nrf24.h"
-#include "sd_hal_mpu6050.h"
+#include "MPU6050.h"
+#include "stm32f1xx_it.h"
 #include <string.h>
+#include <stdio.h>
 /* USER CODE END Includes */
 
 /* Private typedef -----------------------------------------------------------*/
@@ -50,20 +52,12 @@ I2C_HandleTypeDef hi2c2;
 SPI_HandleTypeDef hspi2;
 
 TIM_HandleTypeDef htim1;
+TIM_HandleTypeDef htim2;
 
 UART_HandleTypeDef huart1;
 
 /* USER CODE BEGIN PV */
-uint32_t watch1;
-uint32_t watch2;
-uint32_t watch3;
-uint32_t watch4;
-uint32_t watch5;
-uint32_t test1;
-uint32_t test2;
-uint32_t test3;
-uint32_t test4;
-
+uint32_t watch1,watch2,watch3,watch4,watch5,test1,test2,test3,test5;
 
 //NRF24
 uint8_t nRF24_payloadTX[32]; //TX buffer
@@ -89,22 +83,18 @@ uint32_t buttL;
 uint32_t buttD;
 
 //MPU6050
-SD_MPU6050_Result MPU6050result ;
-SD_MPU6050 mpuDataStr;
-int16_t GyroXOff;
-int16_t GyroYOff;
-int16_t GyroZoff;
-
-
-uint32_t MainInitDoneFlag=0;
+MPU6050_Result MPU6050rezulatat ;
+MPU6050str	mpu6050DataStr;
+int16_t GyroXcal,GyroYcal,GyroZcal;
+int16_t GyroXOff,GyroYOff,GyroZOff;
+int32_t SUMGyroX,SUMGyroY,SUMGyroZ;
+uint32_t i=0;
 
 //UART DEBUG
 char UartTXbuff0[100];
-extern uint32_t BattmVAVG;
 
 //MOTOR
 uint32_t MotorStatus=0;
-
 
 /* USER CODE END PV */
 
@@ -116,6 +106,7 @@ static void MX_I2C2_Init(void);
 static void MX_SPI2_Init(void);
 static void MX_TIM1_Init(void);
 static void MX_USART1_UART_Init(void);
+static void MX_TIM2_Init(void);
 /* USER CODE BEGIN PFP */
 
 /* USER CODE END PFP */
@@ -163,19 +154,21 @@ int main(void)
   MX_SPI2_Init();
   MX_TIM1_Init();
   MX_USART1_UART_Init();
+  MX_TIM2_Init();
   /* USER CODE BEGIN 2 */
 
   HAL_ADCEx_Calibration_Start(&hadc1);
   HAL_ADC_Start(&hadc1);
 
-  HAL_TIM_PWM_Start(&htim1, TIM_CHANNEL_1);
-  HAL_TIM_PWM_Start(&htim1, TIM_CHANNEL_2);
-  HAL_TIM_PWM_Start(&htim1, TIM_CHANNEL_3);
-  HAL_TIM_PWM_Start(&htim1, TIM_CHANNEL_4);
+
+  HAL_Delay(100);//wait for stable power
+
+  MPU6050rezulatat=MPU6050_check(&hi2c2);
+  MPU6050_init(&hi2c2);
+
+  HAL_Delay(400);//for stable MPU6050 readings after init
 
   //NRF24 INIT
-  HAL_Delay(500);//wait for stable power
-
   SPI2->CR1|=SPI_CR1_SPE; //enable SPI
 
   nRF24_CE_L(); // RX/TX disabled
@@ -220,12 +213,30 @@ int main(void)
 
   nRF24_CE_H();//Enable RX
 
-  //MPU6050 INIT
-  MPU6050result=SD_MPU6050_Init(&hi2c2,&mpuDataStr,SD_MPU6050_Device_0,SD_MPU6050_Accelerometer_2G,SD_MPU6050_Gyroscope_500s );
+  //get GYRO offset
+  SUMGyroX=0;
+  SUMGyroY=0;
+  SUMGyroZ=0;
+  for(i=0;i<500;i++)
+  {
+	  MPU6050_gyroread(&hi2c2,&mpu6050DataStr);
+	  SUMGyroX+=mpu6050DataStr.Gyroscope_X;
+	  SUMGyroY+=mpu6050DataStr.Gyroscope_Y;
+	  SUMGyroZ+=mpu6050DataStr.Gyroscope_Z;
+	  HAL_Delay(1);
+  }
+  GyroXOff=SUMGyroX/500;
+  GyroYOff=SUMGyroY/500;
+  GyroZOff=SUMGyroZ/500;
 
 
+  HAL_TIM_PWM_Start(&htim1, TIM_CHANNEL_1);
+  HAL_TIM_PWM_Start(&htim1, TIM_CHANNEL_2);
+  HAL_TIM_PWM_Start(&htim1, TIM_CHANNEL_3);
+  HAL_TIM_PWM_Start(&htim1, TIM_CHANNEL_4);
 
-  MainInitDoneFlag=1;
+  HAL_TIM_Base_Start_IT(&htim2);//Start at the END of Main Initialization
+
   ///-----------------
 
   /* USER CODE END 2 */
@@ -280,31 +291,35 @@ int main(void)
 	  HAL_UART_Transmit ( &huart1, UartTXbuff0, strlen( UartTXbuff0 ), 1 );
 
 	  //MPU 6050
-	  sprintf(UartTXbuff0, "GYRO X RAW=%d \n\r",mpuDataStr.Gyroscope_X);
+	  sprintf(UartTXbuff0, "GYROX=%d Off=%d\n\r",GyroXcal,GyroXOff);
 	  HAL_UART_Transmit ( &huart1, UartTXbuff0, strlen( UartTXbuff0 ), 1 );
 
-	  sprintf(UartTXbuff0, "GYRO Y RAW=%d \n\r",mpuDataStr.Gyroscope_Y);
+	  sprintf(UartTXbuff0, "GYROY=%d Off=%d\n\r",GyroYcal,GyroYOff);
 	  HAL_UART_Transmit ( &huart1, UartTXbuff0, strlen( UartTXbuff0 ), 1 );
 
-	  sprintf(UartTXbuff0, "GYRO Z RAW=%d \n\r",mpuDataStr.Gyroscope_Z);
+	  sprintf(UartTXbuff0, "GYROZ=%d Off=%d\n\r",GyroZcal,GyroZOff);
 	  HAL_UART_Transmit ( &huart1, UartTXbuff0, strlen( UartTXbuff0 ), 1 );
 
-	  sprintf(UartTXbuff0, "ACC X RAW=%d \n\r",mpuDataStr.Accelerometer_X);
+	  sprintf(UartTXbuff0, "ACC X RAW=%d \n\r",mpu6050DataStr.Accelerometer_X);
 	  HAL_UART_Transmit ( &huart1, UartTXbuff0, strlen( UartTXbuff0 ), 1 );
 
-	  sprintf(UartTXbuff0, "ACC Y RAW=%d \n\r",mpuDataStr.Accelerometer_Y);
+	  sprintf(UartTXbuff0, "ACC Y RAW=%d \n\r",mpu6050DataStr.Accelerometer_Y);
 	  HAL_UART_Transmit ( &huart1, UartTXbuff0, strlen( UartTXbuff0 ), 1 );
 
-	  sprintf(UartTXbuff0, "ACC Z RAW=%d \n\r",mpuDataStr.Accelerometer_Z);
+	  sprintf(UartTXbuff0, "ACC Z RAW=%d \n\r",mpu6050DataStr.Accelerometer_Z);
+	  HAL_UART_Transmit ( &huart1, UartTXbuff0, strlen( UartTXbuff0 ), 1 );
+
+	  sprintf(UartTXbuff0, "Factor=%.10f \n\r",GYROFACTOR);
+	  HAL_UART_Transmit ( &huart1, UartTXbuff0, strlen( UartTXbuff0 ), 1 );
+
+	  sprintf(UartTXbuff0, "Pitch=%.2f \n\r",AnglePitch);
+	  HAL_UART_Transmit ( &huart1, UartTXbuff0, strlen( UartTXbuff0 ), 1 );
+
+	  sprintf(UartTXbuff0, "Roll=%.2f \n\r",AngleRoll);
 	  HAL_UART_Transmit ( &huart1, UartTXbuff0, strlen( UartTXbuff0 ), 1 );
 
 	  sprintf(UartTXbuff0, "\n\r" );
 	  HAL_UART_Transmit ( &huart1, UartTXbuff0, strlen( UartTXbuff0 ), 1 );
-
-	  //MPU 6050
-	  SD_MPU6050_ReadGyroscope(&hi2c2,&mpuDataStr);
-	  SD_MPU6050_ReadAccelerometer(&hi2c2,&mpuDataStr);
-
 
   }
   /* USER CODE END 3 */
@@ -559,6 +574,51 @@ static void MX_TIM1_Init(void)
 }
 
 /**
+  * @brief TIM2 Initialization Function
+  * @param None
+  * @retval None
+  */
+static void MX_TIM2_Init(void)
+{
+
+  /* USER CODE BEGIN TIM2_Init 0 */
+
+  /* USER CODE END TIM2_Init 0 */
+
+  TIM_ClockConfigTypeDef sClockSourceConfig = {0};
+  TIM_MasterConfigTypeDef sMasterConfig = {0};
+
+  /* USER CODE BEGIN TIM2_Init 1 */
+
+  /* USER CODE END TIM2_Init 1 */
+  htim2.Instance = TIM2;
+  htim2.Init.Prescaler = 71;
+  htim2.Init.CounterMode = TIM_COUNTERMODE_UP;
+  htim2.Init.Period = 2000;
+  htim2.Init.ClockDivision = TIM_CLOCKDIVISION_DIV1;
+  htim2.Init.AutoReloadPreload = TIM_AUTORELOAD_PRELOAD_ENABLE;
+  if (HAL_TIM_Base_Init(&htim2) != HAL_OK)
+  {
+    Error_Handler();
+  }
+  sClockSourceConfig.ClockSource = TIM_CLOCKSOURCE_INTERNAL;
+  if (HAL_TIM_ConfigClockSource(&htim2, &sClockSourceConfig) != HAL_OK)
+  {
+    Error_Handler();
+  }
+  sMasterConfig.MasterOutputTrigger = TIM_TRGO_RESET;
+  sMasterConfig.MasterSlaveMode = TIM_MASTERSLAVEMODE_DISABLE;
+  if (HAL_TIMEx_MasterConfigSynchronization(&htim2, &sMasterConfig) != HAL_OK)
+  {
+    Error_Handler();
+  }
+  /* USER CODE BEGIN TIM2_Init 2 */
+
+  /* USER CODE END TIM2_Init 2 */
+
+}
+
+/**
   * @brief USART1 Initialization Function
   * @param None
   * @retval None
@@ -610,7 +670,7 @@ static void MX_GPIO_Init(void)
   HAL_GPIO_WritePin(LED1_GPIO_Port, LED1_Pin, GPIO_PIN_RESET);
 
   /*Configure GPIO pin Output Level */
-  HAL_GPIO_WritePin(NRF24_CE_GPIO_Port, NRF24_CE_Pin, GPIO_PIN_RESET);
+  HAL_GPIO_WritePin(GPIOB, NRF24_CE_Pin|TEST1_PIN_Pin, GPIO_PIN_RESET);
 
   /*Configure GPIO pin Output Level */
   HAL_GPIO_WritePin(NRF24_CSN_GPIO_Port, NRF24_CSN_Pin, GPIO_PIN_RESET);
@@ -641,6 +701,13 @@ static void MX_GPIO_Init(void)
   GPIO_InitStruct.Pull = GPIO_NOPULL;
   GPIO_InitStruct.Speed = GPIO_SPEED_FREQ_LOW;
   HAL_GPIO_Init(NRF24_CSN_GPIO_Port, &GPIO_InitStruct);
+
+  /*Configure GPIO pin : TEST1_PIN_Pin */
+  GPIO_InitStruct.Pin = TEST1_PIN_Pin;
+  GPIO_InitStruct.Mode = GPIO_MODE_OUTPUT_PP;
+  GPIO_InitStruct.Pull = GPIO_NOPULL;
+  GPIO_InitStruct.Speed = GPIO_SPEED_FREQ_HIGH;
+  HAL_GPIO_Init(TEST1_PIN_GPIO_Port, &GPIO_InitStruct);
 
 }
 

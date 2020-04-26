@@ -32,7 +32,7 @@ extern "C" {
 
 /* Private includes ----------------------------------------------------------*/
 /* USER CODE BEGIN Includes */
-
+#include "MPU6050.h"
 /* USER CODE END Includes */
 
 /* Exported types ------------------------------------------------------------*/
@@ -57,6 +57,9 @@ extern "C" {
 #define  MINMSGPERSEC   10
 #define T_CLR_SCREEN 		"\x1b[2J"
 
+#define GYROFACTOR (float)( (1) / (65.5 * 500) )  //2ms loop 500 readings per second
+
+
 /* USER CODE END EM */
 
 void HAL_TIM_MspPostInit(TIM_HandleTypeDef *htim);
@@ -65,6 +68,39 @@ void HAL_TIM_MspPostInit(TIM_HandleTypeDef *htim);
 void Error_Handler(void);
 
 /* USER CODE BEGIN EFP */
+
+extern uint32_t watch1,watch2,watch3,watch4,watch5,test1,test2,test3,test5;
+extern uint16_t AdcDataArray[1];
+extern uint32_t MotorStatus;
+
+extern TIM_HandleTypeDef htim1;
+extern ADC_HandleTypeDef hadc1;
+extern I2C_HandleTypeDef hi2c2;
+
+//NRF24 data
+extern uint8_t nRF24_payloadTX[32]; //TX buffer
+extern uint8_t nRF24_payloadRX[32]; //RX buffer
+extern uint8_t RXstpaketov;
+extern const uint8_t nRF24_ADDR[3]; //Address
+extern uint32_t Ljoyupdown;
+extern uint32_t Ljoyleftright;
+extern uint32_t Djoyupdown;
+extern uint32_t Djoyleftright;
+extern uint32_t potenc1;
+extern uint32_t potenc2;
+extern uint32_t togg1;
+extern uint32_t togg2;
+extern uint32_t butt1;
+extern uint32_t butt2;
+extern uint32_t butt3;
+extern uint32_t butt4;
+extern uint32_t buttL;
+extern uint32_t buttD;
+
+//MPU 6050
+extern int16_t GyroXcal,GyroYcal,GyroZcal;
+extern int16_t GyroXOff,GyroYOff,GyroZOff;
+extern MPU6050str	mpu6050DataStr;
 
 /* USER CODE END EFP */
 
@@ -77,6 +113,8 @@ void Error_Handler(void);
 #define NRF24_IRQ_GPIO_Port GPIOA
 #define NRF24_CSN_Pin GPIO_PIN_15
 #define NRF24_CSN_GPIO_Port GPIOA
+#define TEST1_PIN_Pin GPIO_PIN_9
+#define TEST1_PIN_GPIO_Port GPIOB
 /* USER CODE BEGIN Private defines */
 
 /* USER CODE END Private defines */
