@@ -58,7 +58,10 @@ extern "C" {
 #define T_CLR_SCREEN 		"\x1b[2J"
 
 #define GYROFACTOR (float)( (1) / (65.5 * 500) )  //2ms loop 500 readings per second
-
+#define DEGREESTORADIANS (float)( 0.017453292 )  //2conversion factor from degrees to radians
+#define READIANSTODEGREES (float)(57.29578)
+#define ACCELPITCHMANUALOFFSET (float)(0.2)		//spirit level offset in degrees
+#define ACCELROLLMANUALOFFSET (float)(2.2)		//spirit level offset in degrees
 
 /* USER CODE END EM */
 

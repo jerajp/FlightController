@@ -60,8 +60,8 @@ void TIM2_IRQHandler(void);
 /* USER CODE BEGIN EFP */
 
 extern uint32_t BattmVAVG;
-extern float AnglePitch;
-extern float AngleRoll;
+extern float AnglePitch, AnglePitchGyro,AnglePitchAccel;
+extern float AngleRoll, AngleRollGyro, AngleRollAccel;
 
 /* USER CODE END EFP */
 

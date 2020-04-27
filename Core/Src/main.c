@@ -217,7 +217,7 @@ int main(void)
   SUMGyroX=0;
   SUMGyroY=0;
   SUMGyroZ=0;
-  for(i=0;i<500;i++)
+  for(i=0;i<1000;i++)
   {
 	  MPU6050_gyroread(&hi2c2,&mpu6050DataStr);
 	  SUMGyroX+=mpu6050DataStr.Gyroscope_X;
@@ -225,9 +225,9 @@ int main(void)
 	  SUMGyroZ+=mpu6050DataStr.Gyroscope_Z;
 	  HAL_Delay(1);
   }
-  GyroXOff=SUMGyroX/500;
-  GyroYOff=SUMGyroY/500;
-  GyroZOff=SUMGyroZ/500;
+  GyroXOff=SUMGyroX/1000;
+  GyroYOff=SUMGyroY/1000;
+  GyroZOff=SUMGyroZ/1000;
 
 
   HAL_TIM_PWM_Start(&htim1, TIM_CHANNEL_1);
@@ -253,9 +253,6 @@ int main(void)
 
 	  HAL_Delay(100);
 
-	  if(wifiOK)LED1_ON;
-	  else LED1_OFF;
-
 	  sprintf(UartTXbuff0,T_CLR_SCREEN);
 	  HAL_UART_Transmit ( &huart1, UartTXbuff0, strlen( UartTXbuff0 ), 1 );
 
@@ -278,7 +275,7 @@ int main(void)
 	  sprintf(UartTXbuff0, "Togg1=%u Togg2=%u \n\r",togg1,togg2);
 	  HAL_UART_Transmit ( &huart1, UartTXbuff0, strlen( UartTXbuff0 ), 1 );
 
-	  sprintf(UartTXbuff0, "Butt1=%u Butt2=%u Butt3=%u Butt4=%u \n\r",butt1,butt2,butt3,butt4);
+	  sprintf(UartTXbuff0, "B1=%u B2=%u B3=%u B4=%u \n\r",butt1,butt2,butt3,butt4);
 	  HAL_UART_Transmit ( &huart1, UartTXbuff0, strlen( UartTXbuff0 ), 1 );
 
 	  sprintf(UartTXbuff0, "ButtL=%u ButtD=%u \n\r",buttL,buttD);
@@ -309,13 +306,16 @@ int main(void)
 	  sprintf(UartTXbuff0, "ACC Z RAW=%d \n\r",mpu6050DataStr.Accelerometer_Z);
 	  HAL_UART_Transmit ( &huart1, UartTXbuff0, strlen( UartTXbuff0 ), 1 );
 
-	  sprintf(UartTXbuff0, "Factor=%.10f \n\r",GYROFACTOR);
-	  HAL_UART_Transmit ( &huart1, UartTXbuff0, strlen( UartTXbuff0 ), 1 );
-
 	  sprintf(UartTXbuff0, "Pitch=%.2f \n\r",AnglePitch);
 	  HAL_UART_Transmit ( &huart1, UartTXbuff0, strlen( UartTXbuff0 ), 1 );
 
 	  sprintf(UartTXbuff0, "Roll=%.2f \n\r",AngleRoll);
+	  HAL_UART_Transmit ( &huart1, UartTXbuff0, strlen( UartTXbuff0 ), 1 );
+
+	  sprintf(UartTXbuff0, "PitchGyro=%.2f PitchAccel=%.2f \n\r",AnglePitchGyro,AnglePitchAccel);
+	  HAL_UART_Transmit ( &huart1, UartTXbuff0, strlen( UartTXbuff0 ), 1 );
+
+	  sprintf(UartTXbuff0, "RollGyro=%.2f RollAccel=%.2f \n\r",AngleRollGyro,AngleRollAccel);
 	  HAL_UART_Transmit ( &huart1, UartTXbuff0, strlen( UartTXbuff0 ), 1 );
 
 	  sprintf(UartTXbuff0, "\n\r" );

@@ -25,6 +25,7 @@
 /* USER CODE BEGIN Includes */
 #include "nrf24.h"
 #include "MPU6050.h"
+#include <math.h>
 /* USER CODE END Includes */
 
 /* Private typedef -----------------------------------------------------------*/
@@ -45,6 +46,7 @@
 /* Private variables ---------------------------------------------------------*/
 /* USER CODE BEGIN PV */
 uint32_t i;
+uint32_t LEDcount;
 
 uint32_t PWM_Mot1;
 uint32_t PWM_Mot2;
@@ -67,8 +69,10 @@ uint32_t MSGcount;
 uint32_t ConnectWeakFlag;
 uint32_t MSGLowCount;
 
-float AnglePitch;
-float AngleRoll;
+float AnglePitch, AnglePitchGyro,AnglePitchAccel;
+float AngleRoll, AngleRollGyro, AngleRollAccel;
+float Acc_vector;
+uint8_t StartupAngleSet=0;
 
 /* USER CODE END PV */
 
@@ -235,6 +239,14 @@ void TIM2_IRQHandler(void)
   HAL_TIM_IRQHandler(&htim2);
   /* USER CODE BEGIN TIM2_IRQn 1 */
 
+  //blinky
+  LEDcount++;
+  if(LEDcount>=250)
+  {
+	  LEDcount=0;
+	  HAL_GPIO_TogglePin(LED1_GPIO_Port,LED1_Pin);
+  }
+
   HAL_GPIO_WritePin(TEST1_PIN_GPIO_Port,TEST1_PIN_Pin,GPIO_PIN_SET);
 
   //Read Battery Voltage-----------------------------------------------
@@ -362,9 +374,33 @@ void TIM2_IRQHandler(void)
   GyroYcal=mpu6050DataStr.Gyroscope_Y - GyroYOff;
   GyroZcal=mpu6050DataStr.Gyroscope_Z - GyroZOff;
 
-  AnglePitch+=GyroXcal*GYROFACTOR;
-  AngleRoll+=GyroYcal*GYROFACTOR;
+  AnglePitchGyro+=GyroXcal*GYROFACTOR;
+  AngleRollGyro+=GyroYcal*GYROFACTOR;
 
+  //correct angles with jaw axis correction
+  AnglePitchGyro+=AngleRollGyro * sin(GyroZcal * DEGREESTORADIANS * GYROFACTOR);
+  AngleRollGyro-=AnglePitchGyro * sin(GyroZcal * DEGREESTORADIANS * GYROFACTOR);
+
+  //Accelerometer angles
+  Acc_vector=sqrt((mpu6050DataStr.Accelerometer_X * mpu6050DataStr.Accelerometer_X)+(mpu6050DataStr.Accelerometer_Y * mpu6050DataStr.Accelerometer_Y)+(mpu6050DataStr.Accelerometer_Z * mpu6050DataStr.Accelerometer_Z));
+  AnglePitchAccel=asin((float)mpu6050DataStr.Accelerometer_Y/Acc_vector)*READIANSTODEGREES;
+  AngleRollAccel=asin((float)mpu6050DataStr.Accelerometer_X/Acc_vector)*READIANSTODEGREES;
+
+  AnglePitchAccel-=ACCELPITCHMANUALOFFSET;
+  AngleRollAccel-=ACCELROLLMANUALOFFSET;
+
+  if(!StartupAngleSet)
+  {
+	  AnglePitch=AnglePitchAccel;
+	  AngleRoll=AngleRollAccel;
+	  StartupAngleSet=1; //First angles set to accelorometer at startup
+  }
+  else
+  {
+	  AnglePitch=0.98*AnglePitchGyro + 0.02*AnglePitchAccel;
+	  AngleRoll=0.98*AngleRollGyro + 0.02*AngleRollAccel;
+
+  }
   //-------------------------------------------------------------------
 
   //testing------------------------------------------------------------
