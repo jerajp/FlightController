@@ -74,6 +74,50 @@ float AngleRoll, AngleRollGyro, AngleRollAccel;
 float Acc_vector;
 uint8_t StartupAngleSet=0;
 
+//SCALED INPUTS
+float ThrottleINscaled=0;
+float PitchINscaled=0;
+float RollINscaled=0;
+float YawINscaled=0;
+
+float PitchGyroPIDin=0;
+float RollGyroPIDin=0;
+float YawGyroPIDin=0;
+
+//PID
+float pid_output_pitch=0;
+float pid_output_roll=0;
+float pid_output_yaw=0;
+
+float pid_p_gain_pitch = 1.3;   //Gain setting for the pitch P-controller.
+float pid_i_gain_pitch = 0.04;  //Gain setting for the pitch I-controller.
+float pid_d_gain_pitch = 18.0;  //Gain setting for the pitch D-controller.
+int pid_max_pitch = 400;        //Maximum output of the PID-controller (+/-)
+int pid_i_max_pitch = 100;      //Maximum output of the Integral part
+float pitch_integral=0;
+float pitch_diffErrHist=0;
+
+float pid_p_gain_roll = 1.5;   //Gain setting for the roll P-controller  1.3
+float pid_i_gain_roll = 0.5;  //Gain setting for the roll I-controller
+float pid_d_gain_roll = 30.0;  //Gain setting for the roll D-controller
+int pid_max_roll = 600;        //Maximum output of the PID-controller (+/-)
+int pid_i_max_roll = 600;      //Maximum output of the Integral part
+float roll_integral=0;
+float roll_diffErrHist=0;
+
+float pid_p_gain_yaw = 4.0;    //Gain setting for the pitch P-controller.
+float pid_i_gain_yaw = 0.02;   //Gain setting for the pitch I-controller.
+float pid_d_gain_yaw = 0.0;    //Gain setting for the pitch D-controller.
+int pid_max_yaw = 400;         //Maximum output of the PID-controller (+/-)
+int pid_i_max_yaw = 100;       //Maximum output of the Integral part
+float yaw_integral=0;
+float yaw_diffErrHist=0;
+
+float PitchAutoAdjust=0; //Auto level adjust
+float RollAutoAdjust=0;  //auto level adjust
+
+uint32_t togg1hist;
+
 /* USER CODE END PV */
 
 /* Private function prototypes -----------------------------------------------*/
@@ -374,53 +418,133 @@ void TIM2_IRQHandler(void)
   GyroYcal=mpu6050DataStr.Gyroscope_Y - GyroYOff;
   GyroZcal=mpu6050DataStr.Gyroscope_Z - GyroZOff;
 
-  AnglePitchGyro+=GyroXcal*GYROFACTOR;
-  AngleRollGyro+=GyroYcal*GYROFACTOR;
+  AnglePitchGyro+=GyroXcal*GYROFACTORANGLE;
+  AngleRollGyro+=GyroYcal*GYROFACTORANGLE;
 
   //correct angles with jaw axis correction
-  AnglePitchGyro+=AngleRollGyro * sin(GyroZcal * DEGREESTORADIANS * GYROFACTOR);
-  AngleRollGyro-=AnglePitchGyro * sin(GyroZcal * DEGREESTORADIANS * GYROFACTOR);
+  AnglePitchGyro+=AngleRollGyro * sin(GyroZcal * DEGREESTORADIANS * GYROFACTORANGLE);
+  AngleRollGyro-=AnglePitchGyro * sin(GyroZcal * DEGREESTORADIANS * GYROFACTORANGLE);
 
   //Accelerometer angles
   Acc_vector=sqrt((mpu6050DataStr.Accelerometer_X * mpu6050DataStr.Accelerometer_X)+(mpu6050DataStr.Accelerometer_Y * mpu6050DataStr.Accelerometer_Y)+(mpu6050DataStr.Accelerometer_Z * mpu6050DataStr.Accelerometer_Z));
   AnglePitchAccel=asin((float)mpu6050DataStr.Accelerometer_Y/Acc_vector)*READIANSTODEGREES;
-  AngleRollAccel=asin((float)mpu6050DataStr.Accelerometer_X/Acc_vector)*READIANSTODEGREES;
+  AngleRollAccel=-asin((float)mpu6050DataStr.Accelerometer_X/Acc_vector)*READIANSTODEGREES;
 
   AnglePitchAccel-=ACCELPITCHMANUALOFFSET;
   AngleRollAccel-=ACCELROLLMANUALOFFSET;
 
-  if(!StartupAngleSet)
+  AnglePitch=0.998*AnglePitchGyro + 0.002*AnglePitchAccel;
+  AngleRoll=0.998*AngleRollGyro + 0.002*AngleRollAccel;
+
+  //GYRO Data deg/s for 3 PID loops Filtered
+  PitchGyroPIDin = (PitchGyroPIDin * 0.7) + (GyroXcal * GYROFACTORANGLEDEG * 0.3);
+  RollGyroPIDin = (RollGyroPIDin * 0.7) + (GyroYcal * GYROFACTORANGLEDEG * 0.3);
+  YawGyroPIDin = (YawGyroPIDin * 0.7) + (GyroZcal * GYROFACTORANGLEDEG * 0.3);
+  //-------------------------------------------------------------------
+
+  //SCALE DATA
+
+  //Input Controller Center to MAX 50 - >100  --->0-800 us
+  ThrottleINscaled=ScaleDataFl(Ljoyupdown,50,100,MINTRHOTTLE,THROTTLESCALE);//throttle limit to 80%
+
+  //Pitch UP->DOWN 0 -> 100 -----> -180 ->180 deg/s
+  PitchINscaled=ScaleDataFl(Djoyupdown,0,100,-MAXPITCHSCALE,MAXPITCHSCALE);
+
+  //Roll LEFT->RIGHT 0 -> 100 -----> -180 ->180 deg/s
+  RollINscaled=ScaleDataFl(Djoyleftright,0,100,-MAXROLLSCALE,MAXROLLSCALE);
+
+  //Roll LEFT->RIGHT 0 -> 100 -----> -270 ->270 deg/s
+  YawINscaled=ScaleDataFl(Ljoyleftright,0,100,-MAXYAWSCALE,MAXYAWSCALE);
+
+
+
+  if(AutoLevel==1)
   {
-	  AnglePitch=AnglePitchAccel;
-	  AngleRoll=AngleRollAccel;
-	  StartupAngleSet=1; //First angles set to accelorometer at startup
+	  PitchAutoAdjust=(AnglePitch*MAXPITCHSCALE)/MAXPITCHANGLE;
+	  RollAutoAdjust=(AngleRollAccel*MAXROLLSCALE)/MAXROLLANGLE;
   }
   else
   {
-	  AnglePitch=0.98*AnglePitchGyro + 0.02*AnglePitchAccel;
-	  AngleRoll=0.98*AngleRollGyro + 0.02*AngleRollAccel;
-
+	  PitchAutoAdjust=0;
+	  RollAutoAdjust=0;
   }
-  //-------------------------------------------------------------------
+  PitchINscaled-=PitchAutoAdjust;
+  RollINscaled-=RollAutoAdjust;
 
-  //testing------------------------------------------------------------
-  if(togg1==1 && ConnectWeakFlag==0)MotorStatus=1;
-  else MotorStatus=0;
+  //PID
+ // pid_output_pitch = pid(PitchINscaled, PitchGyroPIDin, pid_p_gain_pitch, pid_i_gain_pitch, pid_d_gain_pitch,pitch_integral, pitch_diffErrHist, pid_i_max_pitch, pid_max_pitch);
+  pid_output_roll = pid(RollINscaled, RollGyroPIDin, pid_p_gain_roll, pid_i_gain_roll, pid_d_gain_roll,roll_integral,roll_diffErrHist,pid_i_max_roll, pid_max_roll );
+  //pid_output_yaw = pid(YawINscaled, YawGyroPIDin, pid_p_gain_yaw, pid_i_gain_yaw, pid_d_gain_yaw, yaw_integral,yaw_diffErrHist,pid_i_max_roll, pid_max_yaw );
 
-  if(MotorStatus==0)
+  //TESTING
+  if(ConnectWeakFlag==1)MotorStatus==0;//if connection is lost!
+
+
+  //AutoLevel ON/OFF (TOGGLE 2)
+  if(togg2==1)AutoLevel=1;
+  else AutoLevel=0;
+
+  //Motor STATUS (TOGGLE 1)
+  //ON toggle 0->1 front start motor ON sequence
+  if(togg1hist!=togg1 && togg1==1)MotorStatus=1;
+  togg1hist=togg1;
+
+  //ON toggle 0-> motor always OFF
+  if(togg1==0)MotorStatus=0;
+
+  if(MotorStatus==1)
   {
-	  PWM_Mot1=1000;
-	  PWM_Mot2=1000;
-	  PWM_Mot3=1000;
-	  PWM_Mot4=1000;
+	  //startup angles Accel to Gyro transfer
+	  AnglePitchGyro=AnglePitchAccel;
+	  AngleRollGyro=AngleRollAccel;
+
+	  MotorStatus=2;
   }
-  else if(MotorStatus==1)
+
+  //MOT 1 FRONT LEFT  CW
+  //MOT 2 FRONT RIGHT CCW
+  //MOT 3 BACK  RIGHT CW
+  //MOT 4 BACK  LEFT  CCW
+  switch(MotorStatus)
   {
-	  PWM_Mot1=1000 + potenc1*10;
-	  PWM_Mot2=1000 + potenc1*10;
-	  PWM_Mot3=1000 + potenc1*10;
-	  PWM_Mot4=1000 + potenc1*10;
-  }//-------------------------------------------------------------------
+  	  case 2:
+  	  	  	  {
+  	  	  		  PWM_Mot1=1000 + ThrottleINscaled /*- pid_output_pitch*/ - pid_output_roll /*+ pid_output_yaw*/;
+  	  		  	  PWM_Mot2=1000 + ThrottleINscaled /*- pid_output_pitch*/ + pid_output_roll /*- pid_output_yaw*/;
+  	  		  	  PWM_Mot3=1000 + ThrottleINscaled /*+ pid_output_pitch*/ + pid_output_roll /*+ pid_output_yaw*/;
+  	  		  	  PWM_Mot4=1000 + ThrottleINscaled /*+ pid_output_pitch*/ - pid_output_roll /*- pid_output_yaw*/;
+
+  	  		  	  //MIN OBRATI
+  	  		  	  if(PWM_Mot1 < (1000+ MINTRHOTTLE))PWM_Mot1=(1000+ MINTRHOTTLE);
+				  if(PWM_Mot2 < (1000+ MINTRHOTTLE))PWM_Mot2=(1000+ MINTRHOTTLE);
+				  if(PWM_Mot3 < (1000+ MINTRHOTTLE))PWM_Mot3=(1000+ MINTRHOTTLE);
+				  if(PWM_Mot4 < (1000+ MINTRHOTTLE))PWM_Mot4=(1000+ MINTRHOTTLE);
+
+			  	  //MAX OBRATI
+	  	  		  if(PWM_Mot1 > 1950)PWM_Mot1=1950;
+				  if(PWM_Mot2 > 1950)PWM_Mot2=1950;
+				  if(PWM_Mot3 > 1950)PWM_Mot3=1950;
+				  if(PWM_Mot4 > 1950)PWM_Mot4=1950;
+
+  	  	  	  }break;
+
+  	  default:
+  	  	  	  {
+  	  	  		  PWM_Mot1=900;
+  		  	  	  PWM_Mot2=900;
+  		  	  	  PWM_Mot3=900;
+  		  	  	  PWM_Mot4=900;
+
+  		  	  	  //Reset PID
+  		  	  	  pitch_integral=0;
+  		  	  	  pitch_diffErrHist=0;
+  		  	  	  roll_integral=0;
+  		  	  	  roll_diffErrHist=0;
+  		  	  	  yaw_integral=0;
+  		  	  	  yaw_diffErrHist=0;
+
+  	  	  	  }break;
+  }
 
   //SET PWM CHANNELS-----------------------------------------------------
   __HAL_TIM_SET_COMPARE(&htim1, TIM_CHANNEL_1, PWM_Mot1);
@@ -434,6 +558,43 @@ void TIM2_IRQHandler(void)
 }
 
 /* USER CODE BEGIN 1 */
+float ScaleDataFl(float in_value,float in_min,float in_max, float out_min, float out_max)
+{
+	float factor;
+	float out;
+
+	factor=(out_max-out_min)/(in_max-in_min);
+	out=(in_value-in_min)*factor+out_min;
+	if(out<out_min)out=out_min;
+
+	return out;
+
+}
+
+float pid(float pid_reference, float pid_input, float pid_p, float pid_i, float pid_d, float integral, float diffErrHist, float PIDimax, float PIDmax)
+{
+	float out;
+	float pid_error_temp;
+
+	//Erro calculation
+	pid_error_temp = pid_input - pid_reference;
+
+	//Integral part + saturation
+	integral += pid_i * pid_error_temp;
+	if(integral > PIDimax)integral = PIDimax;
+	else if(integral < PIDimax * -1)integral = PIDimax * -1;
+
+	out = pid_p * pid_error_temp + integral + pid_d * (pid_error_temp - diffErrHist);
+	wfl1=out;
+	if(out > PIDmax)out = PIDmax;
+	else if(out < PIDmax * -1)out = PIDmax * -1;
+    wfl2=out;
+	//save Error for next cylce D calculation
+	diffErrHist = pid_error_temp;
+
+	return out;
+}
+
 
 /* USER CODE END 1 */
 /************************ (C) COPYRIGHT STMicroelectronics *****END OF FILE****/

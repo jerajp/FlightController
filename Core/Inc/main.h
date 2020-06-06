@@ -57,12 +57,21 @@ extern "C" {
 #define  MINMSGPERSEC   10
 #define T_CLR_SCREEN 		"\x1b[2J"
 
-#define GYROFACTOR (float)( (1) / (65.5 * 500) )  //2ms loop 500 readings per second
+#define GYROFACTORANGLE (float)( (1) / (65.5 * 500) )  // [deg]   units 2ms loop 500 readings per second
+#define GYROFACTORANGLEDEG (float)( 1 / 65.5 )  	   // [deg/s] units 65.5 factor-from gyro set-up
 #define DEGREESTORADIANS (float)( 0.017453292 )  //2conversion factor from degrees to radians
 #define READIANSTODEGREES (float)(57.29578)
 #define ACCELPITCHMANUALOFFSET (float)(0.2)		//spirit level offset in degrees
 #define ACCELROLLMANUALOFFSET (float)(2.2)		//spirit level offset in degrees
 
+//MAX VALUES SCALING
+#define MAXPITCHSCALE 	  (float)(180)  //180degrees/second
+#define MAXROLLSCALE 	  (float)(180)  //180degrees/second
+#define MAXYAWSCALE		  (float)(270)  //270degrees/second
+#define THROTTLESCALE	  (float)(800)  //800counts of 1000 (80%)
+#define MINTRHOTTLE		  200           //200count out of 1000 to keep rotors spinning
+#define MAXPITCHANGLE	  (float)(60) //degrees
+#define MAXROLLANGLE	  (float)(60) //degrees
 /* USER CODE END EM */
 
 void HAL_TIM_MspPostInit(TIM_HandleTypeDef *htim);
@@ -73,8 +82,10 @@ void Error_Handler(void);
 /* USER CODE BEGIN EFP */
 
 extern uint32_t watch1,watch2,watch3,watch4,watch5,test1,test2,test3,test5;
+extern float wfl1,wfl2,wfl3,wfl4;
 extern uint16_t AdcDataArray[1];
 extern uint32_t MotorStatus;
+extern uint32_t AutoLevel;
 
 extern TIM_HandleTypeDef htim1;
 extern ADC_HandleTypeDef hadc1;
@@ -104,6 +115,26 @@ extern uint32_t buttD;
 extern int16_t GyroXcal,GyroYcal,GyroZcal;
 extern int16_t GyroXOff,GyroYOff,GyroZOff;
 extern MPU6050str	mpu6050DataStr;
+
+//Inputs
+extern float ThrottleINscaled;
+extern float PitchINscaled;
+extern float RollINscaled;
+extern float YawINscaled;
+
+//PID motor control
+extern uint32_t PWM_Mot1;
+extern uint32_t PWM_Mot2;
+extern uint32_t PWM_Mot3;
+extern uint32_t PWM_Mot4;
+
+//PID
+extern float pid_output_pitch;
+extern float pid_output_roll;
+extern float pid_output_yaw;
+
+extern float PitchAutoAdjust;
+extern float RollAutoAdjust;
 
 /* USER CODE END EFP */
 

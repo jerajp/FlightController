@@ -58,6 +58,7 @@ UART_HandleTypeDef huart1;
 
 /* USER CODE BEGIN PV */
 uint32_t watch1,watch2,watch3,watch4,watch5,test1,test2,test3,test5;
+float wfl1,wfl2,wfl3,wfl4;
 
 //NRF24
 uint8_t nRF24_payloadTX[32]; //TX buffer
@@ -95,6 +96,7 @@ char UartTXbuff0[100];
 
 //MOTOR
 uint32_t MotorStatus=0;
+uint32_t AutoLevel=0;
 
 /* USER CODE END PV */
 
@@ -251,75 +253,127 @@ int main(void)
 
     /* USER CODE BEGIN 3 */
 
-	  HAL_Delay(100);
+	  HAL_Delay(50);
 
 	  sprintf(UartTXbuff0,T_CLR_SCREEN);
 	  HAL_UART_Transmit ( &huart1, UartTXbuff0, strlen( UartTXbuff0 ), 1 );
 
-	  if(wifiOK)
-	  {
-		  sprintf(UartTXbuff0, "Wifi OK \n\r");
-	  }
-	  else sprintf(UartTXbuff0, "Wifi Fail \n\r");
+	  //if(wifiOK)
+	  //{
+	  //	  sprintf(UartTXbuff0, "Wifi OK \n\r");
+	 // }
+	  //else sprintf(UartTXbuff0, "Wifi Fail \n\r");
+	  //HAL_UART_Transmit ( &huart1, UartTXbuff0, strlen( UartTXbuff0 ), 1 );
+
+	  //sprintf(UartTXbuff0, "L-UD=%u L-LR=%u \n\r",Ljoyupdown,Ljoyleftright);
+	  //HAL_UART_Transmit ( &huart1, UartTXbuff0, strlen( UartTXbuff0 ), 1 );
+
+	  //sprintf(UartTXbuff0, "D-UD=%u D-LR=%u \n\r",Djoyupdown,Djoyleftright);
+	  //HAL_UART_Transmit ( &huart1, UartTXbuff0, strlen( UartTXbuff0 ), 1 );
+
+	  //sprintf(UartTXbuff0, "Motor Status %u \n\r",MotorStatus);
+	  //HAL_UART_Transmit ( &huart1, UartTXbuff0, strlen( UartTXbuff0 ), 1 );
+
+
+	  sprintf(UartTXbuff0, "ThrottleIN %.2f \n\r",ThrottleINscaled);
 	  HAL_UART_Transmit ( &huart1, UartTXbuff0, strlen( UartTXbuff0 ), 1 );
 
-	  sprintf(UartTXbuff0, "L-UD=%u L-LR=%u \n\r",Ljoyupdown,Ljoyleftright);
+
+	  //sprintf(UartTXbuff0, "PitchIN %.2f \n\r",PitchINscaled);
+	  //HAL_UART_Transmit ( &huart1, UartTXbuff0, strlen( UartTXbuff0 ), 1 );
+
+
+	  //sprintf(UartTXbuff0, "RollIN %.2f \n\r",RollINscaled);
+	  //HAL_UART_Transmit ( &huart1, UartTXbuff0, strlen( UartTXbuff0 ), 1 );
+
+
+	  //sprintf(UartTXbuff0, "YawIN %.2f \n\r",YawINscaled);
+	  //HAL_UART_Transmit ( &huart1, UartTXbuff0, strlen( UartTXbuff0 ), 1 );
+
+	  //sprintf(UartTXbuff0, "Pot1=%u Pot2=%u \n\r",potenc1,potenc2);
+	  //HAL_UART_Transmit ( &huart1, UartTXbuff0, strlen( UartTXbuff0 ), 1 );
+
+	  //sprintf(UartTXbuff0, "Togg1=%u Togg2=%u \n\r",togg1,togg2);
+	  //HAL_UART_Transmit ( &huart1, UartTXbuff0, strlen( UartTXbuff0 ), 1 );
+
+	  //sprintf(UartTXbuff0, "B1=%u B2=%u B3=%u B4=%u \n\r",butt1,butt2,butt3,butt4);
+	  //HAL_UART_Transmit ( &huart1, UartTXbuff0, strlen( UartTXbuff0 ), 1 );
+
+	  //sprintf(UartTXbuff0, "ButtL=%u ButtD=%u \n\r",buttL,buttD);
+	  //HAL_UART_Transmit ( &huart1, UartTXbuff0, strlen( UartTXbuff0 ), 1 );
+
+	  //sprintf(UartTXbuff0, "MSG RECV=%u \n\r",watch1);
+	  //HAL_UART_Transmit ( &huart1, UartTXbuff0, strlen( UartTXbuff0 ), 1 );
+
+	 // sprintf(UartTXbuff0, "MSG SEND=%u \n\r",watch2);
+	  //HAL_UART_Transmit ( &huart1, UartTXbuff0, strlen( UartTXbuff0 ), 1 );
+
+	  //sprintf(UartTXbuff0, "GYROX=%d Off=%d\n\r",GyroXcal,GyroXOff);
+	  //HAL_UART_Transmit ( &huart1, UartTXbuff0, strlen( UartTXbuff0 ), 1 );
+
+	  //sprintf(UartTXbuff0, "GYROY=%d Off=%d\n\r",GyroYcal,GyroYOff);
+	  //HAL_UART_Transmit ( &huart1, UartTXbuff0, strlen( UartTXbuff0 ), 1 );
+
+	  //sprintf(UartTXbuff0, "GYROZ=%d Off=%d\n\r",GyroZcal,GyroZOff);
+	  //HAL_UART_Transmit ( &huart1, UartTXbuff0, strlen( UartTXbuff0 ), 1 );
+
+	  //sprintf(UartTXbuff0, "ACC X RAW=%d \n\r",mpu6050DataStr.Accelerometer_X);
+	  //HAL_UART_Transmit ( &huart1, UartTXbuff0, strlen( UartTXbuff0 ), 1 );
+
+	  //sprintf(UartTXbuff0, "ACC Y RAW=%d \n\r",mpu6050DataStr.Accelerometer_Y);
+	  //HAL_UART_Transmit ( &huart1, UartTXbuff0, strlen( UartTXbuff0 ), 1 );
+
+	  //sprintf(UartTXbuff0, "ACC Z RAW=%d \n\r",mpu6050DataStr.Accelerometer_Z);
+	  //HAL_UART_Transmit ( &huart1, UartTXbuff0, strlen( UartTXbuff0 ), 1 );
+
+	  //sprintf(UartTXbuff0, "PchGy=%.2f PchAcc=%.2f \n\r",AnglePitchGyro,AnglePitchAccel);
+	  //HAL_UART_Transmit ( &huart1, UartTXbuff0, strlen( UartTXbuff0 ), 1 );
+
+	  //sprintf(UartTXbuff0, "RollGy=%.2f RollAcc=%.2f \n\r",AngleRollGyro,AngleRollAccel);
+	  //HAL_UART_Transmit ( &huart1, UartTXbuff0, strlen( UartTXbuff0 ), 1 );
+
+	  //sprintf(UartTXbuff0, "Pitch=%.2f \n\r",AnglePitch);
+	  //HAL_UART_Transmit ( &huart1, UartTXbuff0, strlen( UartTXbuff0 ), 1 );
+
+	  //sprintf(UartTXbuff0, "Roll=%.2f \n\r",AngleRoll);
+	  //HAL_UART_Transmit ( &huart1, UartTXbuff0, strlen( UartTXbuff0 ), 1 );
+
+	  sprintf(UartTXbuff0, "PWM Mot1=%u \n\r",PWM_Mot1);
 	  HAL_UART_Transmit ( &huart1, UartTXbuff0, strlen( UartTXbuff0 ), 1 );
 
-	  sprintf(UartTXbuff0, "D-UD=%u D-LR=%u \n\r",Djoyupdown,Djoyleftright);
+	  sprintf(UartTXbuff0, "PWM Mot2=%u \n\r",PWM_Mot2);
 	  HAL_UART_Transmit ( &huart1, UartTXbuff0, strlen( UartTXbuff0 ), 1 );
 
-	  sprintf(UartTXbuff0, "Pot1=%u Pot2=%u \n\r",potenc1,potenc2);
+	  sprintf(UartTXbuff0, "PWM Mot3=%u \n\r",PWM_Mot3);
 	  HAL_UART_Transmit ( &huart1, UartTXbuff0, strlen( UartTXbuff0 ), 1 );
 
-	  sprintf(UartTXbuff0, "Togg1=%u Togg2=%u \n\r",togg1,togg2);
+	  sprintf(UartTXbuff0, "PWM Mot4=%u \n\r",PWM_Mot4);
 	  HAL_UART_Transmit ( &huart1, UartTXbuff0, strlen( UartTXbuff0 ), 1 );
 
-	  sprintf(UartTXbuff0, "B1=%u B2=%u B3=%u B4=%u \n\r",butt1,butt2,butt3,butt4);
+	  sprintf(UartTXbuff0, "wfl1=%.2f \n\r",wfl1);
 	  HAL_UART_Transmit ( &huart1, UartTXbuff0, strlen( UartTXbuff0 ), 1 );
 
-	  sprintf(UartTXbuff0, "ButtL=%u ButtD=%u \n\r",buttL,buttD);
+
+	  sprintf(UartTXbuff0, "wfl2=%.2f \n\r",wfl2);
 	  HAL_UART_Transmit ( &huart1, UartTXbuff0, strlen( UartTXbuff0 ), 1 );
 
-	  sprintf(UartTXbuff0, "MSG RECV=%u \n\r",watch1);
-	  HAL_UART_Transmit ( &huart1, UartTXbuff0, strlen( UartTXbuff0 ), 1 );
+	  //sprintf(UartTXbuff0, "PID pitch=%.2f \n\r",pid_output_pitch);
+	  //HAL_UART_Transmit ( &huart1, UartTXbuff0, strlen( UartTXbuff0 ), 1 );
 
-	  sprintf(UartTXbuff0, "MSG SEND=%u \n\r",watch2);
-	  HAL_UART_Transmit ( &huart1, UartTXbuff0, strlen( UartTXbuff0 ), 1 );
+	  //sprintf(UartTXbuff0, "PID roll=%.2f \n\r",pid_output_roll);
+	  //HAL_UART_Transmit ( &huart1, UartTXbuff0, strlen( UartTXbuff0 ), 1 );
 
-	  //MPU 6050
-	  sprintf(UartTXbuff0, "GYROX=%d Off=%d\n\r",GyroXcal,GyroXOff);
-	  HAL_UART_Transmit ( &huart1, UartTXbuff0, strlen( UartTXbuff0 ), 1 );
+	  //sprintf(UartTXbuff0, "PID yaw=%.2f \n\r",pid_output_yaw);
+	  //HAL_UART_Transmit ( &huart1, UartTXbuff0, strlen( UartTXbuff0 ), 1 );
 
-	  sprintf(UartTXbuff0, "GYROY=%d Off=%d\n\r",GyroYcal,GyroYOff);
-	  HAL_UART_Transmit ( &huart1, UartTXbuff0, strlen( UartTXbuff0 ), 1 );
+	  //sprintf(UartTXbuff0, "pitch adj=%.2f \n\r",PitchAutoAdjust);
+	  //HAL_UART_Transmit ( &huart1, UartTXbuff0, strlen( UartTXbuff0 ), 1 );
 
-	  sprintf(UartTXbuff0, "GYROZ=%d Off=%d\n\r",GyroZcal,GyroZOff);
-	  HAL_UART_Transmit ( &huart1, UartTXbuff0, strlen( UartTXbuff0 ), 1 );
+	  //sprintf(UartTXbuff0, "roll adj=%.2f \n\r",RollAutoAdjust);
+	  //HAL_UART_Transmit ( &huart1, UartTXbuff0, strlen( UartTXbuff0 ), 1 );
 
-	  sprintf(UartTXbuff0, "ACC X RAW=%d \n\r",mpu6050DataStr.Accelerometer_X);
-	  HAL_UART_Transmit ( &huart1, UartTXbuff0, strlen( UartTXbuff0 ), 1 );
-
-	  sprintf(UartTXbuff0, "ACC Y RAW=%d \n\r",mpu6050DataStr.Accelerometer_Y);
-	  HAL_UART_Transmit ( &huart1, UartTXbuff0, strlen( UartTXbuff0 ), 1 );
-
-	  sprintf(UartTXbuff0, "ACC Z RAW=%d \n\r",mpu6050DataStr.Accelerometer_Z);
-	  HAL_UART_Transmit ( &huart1, UartTXbuff0, strlen( UartTXbuff0 ), 1 );
-
-	  sprintf(UartTXbuff0, "Pitch=%.2f \n\r",AnglePitch);
-	  HAL_UART_Transmit ( &huart1, UartTXbuff0, strlen( UartTXbuff0 ), 1 );
-
-	  sprintf(UartTXbuff0, "Roll=%.2f \n\r",AngleRoll);
-	  HAL_UART_Transmit ( &huart1, UartTXbuff0, strlen( UartTXbuff0 ), 1 );
-
-	  sprintf(UartTXbuff0, "PitchGyro=%.2f PitchAccel=%.2f \n\r",AnglePitchGyro,AnglePitchAccel);
-	  HAL_UART_Transmit ( &huart1, UartTXbuff0, strlen( UartTXbuff0 ), 1 );
-
-	  sprintf(UartTXbuff0, "RollGyro=%.2f RollAccel=%.2f \n\r",AngleRollGyro,AngleRollAccel);
-	  HAL_UART_Transmit ( &huart1, UartTXbuff0, strlen( UartTXbuff0 ), 1 );
-
-	  sprintf(UartTXbuff0, "\n\r" );
-	  HAL_UART_Transmit ( &huart1, UartTXbuff0, strlen( UartTXbuff0 ), 1 );
+	  //sprintf(UartTXbuff0, "\n\r" );
+	  //HAL_UART_Transmit ( &huart1, UartTXbuff0, strlen( UartTXbuff0 ), 1 );
 
   }
   /* USER CODE END 3 */
