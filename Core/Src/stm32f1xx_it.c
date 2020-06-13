@@ -89,32 +89,29 @@ float pid_output_pitch=0;
 float pid_output_roll=0;
 float pid_output_yaw=0;
 
-float pid_p_gain_pitch = 1.3;   //Gain setting for the pitch P-controller.
-float pid_i_gain_pitch = 0.04;  //Gain setting for the pitch I-controller.
-float pid_d_gain_pitch = 18.0;  //Gain setting for the pitch D-controller.
+float pid_p_gain_pitch = 5.0;   //Gain setting for the pitch P-controller.
+float pid_i_gain_pitch = 0.001;  //Gain setting for the pitch I-controller.
+float pid_d_gain_pitch = 500.0;  //Gain setting for the pitch D-controller.
 int pid_max_pitch = 400;        //Maximum output of the PID-controller (+/-)
 int pid_i_max_pitch = 100;      //Maximum output of the Integral part
 float pitch_integral=0;
 float pitch_diffErrHist=0;
 
-float pid_p_gain_roll = 1.5;   //Gain setting for the roll P-controller  1.3
-float pid_i_gain_roll = 0.5;  //Gain setting for the roll I-controller
-float pid_d_gain_roll = 30.0;  //Gain setting for the roll D-controller
-int pid_max_roll = 600;        //Maximum output of the PID-controller (+/-)
-int pid_i_max_roll = 600;      //Maximum output of the Integral part
+float pid_p_gain_roll = 5.0;   //Gain setting for the roll P-controller  1.3
+float pid_i_gain_roll = 0.001;  //Gain setting for the roll I-controller
+float pid_d_gain_roll = 500.0; //Gain setting for the roll D-controller
+int pid_max_roll = 400;        //Maximum output of the PID-controller (+/-)
+int pid_i_max_roll = 400;      //Maximum output of the Integral part
 float roll_integral=0;
 float roll_diffErrHist=0;
 
 float pid_p_gain_yaw = 4.0;    //Gain setting for the pitch P-controller.
-float pid_i_gain_yaw = 0.02;   //Gain setting for the pitch I-controller.
+float pid_i_gain_yaw = 0.0;   //Gain setting for the pitch I-controller.
 float pid_d_gain_yaw = 0.0;    //Gain setting for the pitch D-controller.
 int pid_max_yaw = 400;         //Maximum output of the PID-controller (+/-)
 int pid_i_max_yaw = 100;       //Maximum output of the Integral part
 float yaw_integral=0;
 float yaw_diffErrHist=0;
-
-float PitchAutoAdjust=0; //Auto level adjust
-float RollAutoAdjust=0;  //auto level adjust
 
 uint32_t togg1hist;
 
@@ -320,7 +317,6 @@ void TIM2_IRQHandler(void)
   {
   		if ((nRF24_GetStatus_RXFIFO() != nRF24_STATUS_RXFIFO_EMPTY) )
   		{
-  			watch1++;
 
   			// Get a payload from the transceiver
   			nRF24_ReadPayload(nRF24_payloadRX, &RXstpaketov);
@@ -328,22 +324,25 @@ void TIM2_IRQHandler(void)
   			// Clear all pending IRQ flags
   			nRF24_ClearIRQFlags();
 
-  			Ljoyupdown=nRF24_payloadRX[0];
-  			Ljoyleftright=nRF24_payloadRX[1];
-  			Djoyupdown=nRF24_payloadRX[2];
-  			Djoyleftright=nRF24_payloadRX[3];
-  			potenc1=nRF24_payloadRX[4];
-  			potenc2=nRF24_payloadRX[5];
+  			//Check if Data is in correct ranges
+  			if(nRF24_payloadRX[0]<=100 && nRF24_payloadRX[1]<=100 && nRF24_payloadRX[2]<=100 && nRF24_payloadRX[3]<=100)
+  			{
+  				Ljoyupdown=nRF24_payloadRX[0];
+  				Ljoyleftright=nRF24_payloadRX[1];
+  				Djoyupdown=nRF24_payloadRX[2];
+  				Djoyleftright=nRF24_payloadRX[3];
+  				potenc1=nRF24_payloadRX[4];
+  				potenc2=nRF24_payloadRX[5];
 
-  			togg1=nRF24_payloadRX[6]>>7;
-  			togg2=(nRF24_payloadRX[6] & 64 )>>6;
-  			butt1=(nRF24_payloadRX[6] & 32 )>>5;
-  			butt2=(nRF24_payloadRX[6] & 16 )>>4;
-  			butt3=(nRF24_payloadRX[6] & 8 )>>3;
-  			butt4=(nRF24_payloadRX[6] & 4 )>>2;
-  			buttL=(nRF24_payloadRX[6] & 2 )>>1;
-  			buttD=(nRF24_payloadRX[6] & 1 );
-
+  				togg1=nRF24_payloadRX[6]>>7;
+  				togg2=(nRF24_payloadRX[6] & 64 )>>6;
+  				butt1=(nRF24_payloadRX[6] & 32 )>>5;
+  				butt2=(nRF24_payloadRX[6] & 16 )>>4;
+  				butt3=(nRF24_payloadRX[6] & 8 )>>3;
+  				butt4=(nRF24_payloadRX[6] & 4 )>>2;
+  				buttL=(nRF24_payloadRX[6] & 2 )>>1;
+  				buttD=(nRF24_payloadRX[6] & 1 );
+  			}
   			SendBackFlag=1;
   			RXactiveFlag=0;
 
@@ -371,7 +370,6 @@ void TIM2_IRQHandler(void)
 
   	 	 			// Transmit a packet
   	 	 			nRF24_TransmitPacket(nRF24_payloadTX, 2);
-  	 	 			watch2++;
   	 	 	 	 }break;
 
       	case 5:
@@ -437,9 +435,9 @@ void TIM2_IRQHandler(void)
   AngleRoll=0.998*AngleRollGyro + 0.002*AngleRollAccel;
 
   //GYRO Data deg/s for 3 PID loops Filtered
-  PitchGyroPIDin = (PitchGyroPIDin * 0.7) + (GyroXcal * GYROFACTORANGLEDEG * 0.3);
-  RollGyroPIDin = (RollGyroPIDin * 0.7) + (GyroYcal * GYROFACTORANGLEDEG * 0.3);
-  YawGyroPIDin = (YawGyroPIDin * 0.7) + (GyroZcal * GYROFACTORANGLEDEG * 0.3);
+  PitchGyroPIDin =  (PitchGyroPIDin * 0.7) + (AnglePitch * 0.3);
+  RollGyroPIDin = (RollGyroPIDin * 0.7) + (AngleRoll * 0.3);
+  //YawGyroPIDin = (YawGyroPIDin * 0.7) + (GyroZcal * GYROFACTORANGLEDEG * 0.3);
   //-------------------------------------------------------------------
 
   //SCALE DATA
@@ -447,37 +445,36 @@ void TIM2_IRQHandler(void)
   //Input Controller Center to MAX 50 - >100  --->0-800 us
   ThrottleINscaled=ScaleDataFl(Ljoyupdown,50,100,MINTRHOTTLE,THROTTLESCALE);//throttle limit to 80%
 
-  //Pitch UP->DOWN 0 -> 100 -----> -180 ->180 deg/s
+  //TESTING potenciometer=throttle
+  ThrottleINscaled=ScaleDataFl(potenc1,0,100,0,1000);//direct 10-100 -->0-1000 testing
+
+  //Pitch UP->DOWN 0 -> 100 -----> -45 ->45 deg/s
   PitchINscaled=ScaleDataFl(Djoyupdown,0,100,-MAXPITCHSCALE,MAXPITCHSCALE);
 
-  //Roll LEFT->RIGHT 0 -> 100 -----> -180 ->180 deg/s
+  //Roll LEFT->RIGHT 0 -> 100 -----> -45 ->45 deg/s
   RollINscaled=ScaleDataFl(Djoyleftright,0,100,-MAXROLLSCALE,MAXROLLSCALE);
 
-  //Roll LEFT->RIGHT 0 -> 100 -----> -270 ->270 deg/s
+  //Roll LEFT->RIGHT 0 -> 100 -----> -180 ->180 deg/s
   YawINscaled=ScaleDataFl(Ljoyleftright,0,100,-MAXYAWSCALE,MAXYAWSCALE);
 
+  //TESTING
+  pid_p_gain_roll=potenc2*0.1;
+  //pid_d_gain_roll=potenc1*8;
+  //pid_i_gain_roll=potenc2*0.0001;
+  wfl1=pid_p_gain_roll;
+  wfl2=pid_d_gain_roll;
+  wfl3=pid_i_gain_roll;
 
-
-  if(AutoLevel==1)
-  {
-	  PitchAutoAdjust=(AnglePitch*MAXPITCHSCALE)/MAXPITCHANGLE;
-	  RollAutoAdjust=(AngleRollAccel*MAXROLLSCALE)/MAXROLLANGLE;
-  }
-  else
-  {
-	  PitchAutoAdjust=0;
-	  RollAutoAdjust=0;
-  }
-  PitchINscaled-=PitchAutoAdjust;
-  RollINscaled-=RollAutoAdjust;
+  //test
+  //ThrottleINscaled=500;
 
   //PID
- // pid_output_pitch = pid(PitchINscaled, PitchGyroPIDin, pid_p_gain_pitch, pid_i_gain_pitch, pid_d_gain_pitch,pitch_integral, pitch_diffErrHist, pid_i_max_pitch, pid_max_pitch);
-  pid_output_roll = pid(RollINscaled, RollGyroPIDin, pid_p_gain_roll, pid_i_gain_roll, pid_d_gain_roll,roll_integral,roll_diffErrHist,pid_i_max_roll, pid_max_roll );
-  //pid_output_yaw = pid(YawINscaled, YawGyroPIDin, pid_p_gain_yaw, pid_i_gain_yaw, pid_d_gain_yaw, yaw_integral,yaw_diffErrHist,pid_i_max_roll, pid_max_yaw );
+  pid_output_pitch = pid(PitchINscaled, PitchGyroPIDin, pid_p_gain_pitch, pid_i_gain_pitch, pid_d_gain_pitch,&pitch_integral, &pitch_diffErrHist, pid_i_max_pitch, pid_max_pitch);
+  pid_output_roll = pid(RollINscaled, RollGyroPIDin, pid_p_gain_roll, pid_i_gain_roll, pid_d_gain_roll,&roll_integral,&roll_diffErrHist,pid_i_max_roll, pid_max_roll );
+  //pid_output_yaw = pid(YawINscaled, YawGyroPIDin, pid_p_gain_yaw, pid_i_gain_yaw, pid_d_gain_yaw, &yaw_integral,&yaw_diffErrHist,pid_i_max_roll, pid_max_yaw );
 
   //TESTING
-  if(ConnectWeakFlag==1)MotorStatus==0;//if connection is lost!
+  if(ConnectWeakFlag==1)MotorStatus=0;//if connection is lost!
 
 
   //AutoLevel ON/OFF (TOGGLE 2)
@@ -509,10 +506,10 @@ void TIM2_IRQHandler(void)
   {
   	  case 2:
   	  	  	  {
-  	  	  		  PWM_Mot1=1000 + ThrottleINscaled /*- pid_output_pitch*/ - pid_output_roll /*+ pid_output_yaw*/;
-  	  		  	  PWM_Mot2=1000 + ThrottleINscaled /*- pid_output_pitch*/ + pid_output_roll /*- pid_output_yaw*/;
-  	  		  	  PWM_Mot3=1000 + ThrottleINscaled /*+ pid_output_pitch*/ + pid_output_roll /*+ pid_output_yaw*/;
-  	  		  	  PWM_Mot4=1000 + ThrottleINscaled /*+ pid_output_pitch*/ - pid_output_roll /*- pid_output_yaw*/;
+  	  	  		  PWM_Mot1=1000 + ThrottleINscaled  + pid_output_pitch - pid_output_roll /*+ pid_output_yaw*/;
+  	  		  	  PWM_Mot2=1000 + ThrottleINscaled  + pid_output_pitch + pid_output_roll /*- pid_output_yaw*/;
+  	  		  	  PWM_Mot3=1000 + ThrottleINscaled  - pid_output_pitch + pid_output_roll /*+ pid_output_yaw*/;
+  	  		  	  PWM_Mot4=1000 + ThrottleINscaled  - pid_output_pitch - pid_output_roll /*- pid_output_yaw*/;
 
   	  		  	  //MIN OBRATI
   	  		  	  if(PWM_Mot1 < (1000+ MINTRHOTTLE))PWM_Mot1=(1000+ MINTRHOTTLE);
@@ -571,7 +568,7 @@ float ScaleDataFl(float in_value,float in_min,float in_max, float out_min, float
 
 }
 
-float pid(float pid_reference, float pid_input, float pid_p, float pid_i, float pid_d, float integral, float diffErrHist, float PIDimax, float PIDmax)
+float pid(float pid_reference, float pid_input, float pid_p, float pid_i, float pid_d, float *integral, float *diffErrHist, float PIDimax, float PIDmax)
 {
 	float out;
 	float pid_error_temp;
@@ -580,17 +577,18 @@ float pid(float pid_reference, float pid_input, float pid_p, float pid_i, float 
 	pid_error_temp = pid_input - pid_reference;
 
 	//Integral part + saturation
-	integral += pid_i * pid_error_temp;
-	if(integral > PIDimax)integral = PIDimax;
-	else if(integral < PIDimax * -1)integral = PIDimax * -1;
+	*integral += pid_i * pid_error_temp;
+	if(*integral > PIDimax)*integral = PIDimax;
+	else if(*integral < PIDimax * -1)*integral = PIDimax * -1;
 
-	out = pid_p * pid_error_temp + integral + pid_d * (pid_error_temp - diffErrHist);
-	wfl1=out;
+	out = pid_p * pid_error_temp + *integral + pid_d * (pid_error_temp - *diffErrHist);
+
 	if(out > PIDmax)out = PIDmax;
 	else if(out < PIDmax * -1)out = PIDmax * -1;
-    wfl2=out;
+
 	//save Error for next cylce D calculation
-	diffErrHist = pid_error_temp;
+	*diffErrHist = pid_error_temp;
+
 
 	return out;
 }

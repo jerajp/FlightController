@@ -60,11 +60,12 @@ void TIM2_IRQHandler(void);
 /* USER CODE BEGIN EFP */
 
 float ScaleDataFl(float in_value,float in_min,float in_max, float out_min, float out_max);
-float pid(float pid_reference, float pid_input, float pid_p, float pid_i, float pid_d, float integral, float diffErrHist, float PIDimax, float PIDmax);
+float pid(float pid_reference, float pid_input, float pid_p, float pid_i, float pid_d, float *integral, float *diffErrHist, float PIDimax, float PIDmax);
 
 extern uint32_t BattmVAVG;
 extern float AnglePitch, AnglePitchGyro,AnglePitchAccel;
 extern float AngleRoll, AngleRollGyro, AngleRollAccel;
+extern float pid_output_roll,pid_output_pitch,pid_output_yaw;
 
 /* USER CODE END EFP */
 

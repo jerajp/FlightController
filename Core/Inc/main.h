@@ -65,13 +65,12 @@ extern "C" {
 #define ACCELROLLMANUALOFFSET (float)(2.2)		//spirit level offset in degrees
 
 //MAX VALUES SCALING
-#define MAXPITCHSCALE 	  (float)(180)  //180degrees/second
-#define MAXROLLSCALE 	  (float)(180)  //180degrees/second
-#define MAXYAWSCALE		  (float)(270)  //270degrees/second
+#define MAXPITCHSCALE 	  (float)(45)   //degrees
+#define MAXROLLSCALE 	  (float)(45)   //degrees
+#define MAXYAWSCALE		  (float)(180)  //180degrees
 #define THROTTLESCALE	  (float)(800)  //800counts of 1000 (80%)
-#define MINTRHOTTLE		  200           //200count out of 1000 to keep rotors spinning
-#define MAXPITCHANGLE	  (float)(60) //degrees
-#define MAXROLLANGLE	  (float)(60) //degrees
+#define MINTRHOTTLE		  80           //200count out of 1000 to keep rotors spinning
+
 /* USER CODE END EM */
 
 void HAL_TIM_MspPostInit(TIM_HandleTypeDef *htim);

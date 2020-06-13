@@ -162,8 +162,7 @@ int main(void)
   HAL_ADCEx_Calibration_Start(&hadc1);
   HAL_ADC_Start(&hadc1);
 
-
-  HAL_Delay(100);//wait for stable power
+  HAL_Delay(400);//wait for stable power
 
   MPU6050rezulatat=MPU6050_check(&hi2c2);
   MPU6050_init(&hi2c2);
@@ -226,6 +225,7 @@ int main(void)
 	  SUMGyroY+=mpu6050DataStr.Gyroscope_Y;
 	  SUMGyroZ+=mpu6050DataStr.Gyroscope_Z;
 	  HAL_Delay(1);
+	  watch2++;
   }
   GyroXOff=SUMGyroX/1000;
   GyroYOff=SUMGyroY/1000;
@@ -266,29 +266,28 @@ int main(void)
 	  //HAL_UART_Transmit ( &huart1, UartTXbuff0, strlen( UartTXbuff0 ), 1 );
 
 	  //sprintf(UartTXbuff0, "L-UD=%u L-LR=%u \n\r",Ljoyupdown,Ljoyleftright);
-	  //HAL_UART_Transmit ( &huart1, UartTXbuff0, strlen( UartTXbuff0 ), 1 );
+	 // HAL_UART_Transmit ( &huart1, UartTXbuff0, strlen( UartTXbuff0 ), 1 );
 
 	  //sprintf(UartTXbuff0, "D-UD=%u D-LR=%u \n\r",Djoyupdown,Djoyleftright);
 	  //HAL_UART_Transmit ( &huart1, UartTXbuff0, strlen( UartTXbuff0 ), 1 );
 
-	  //sprintf(UartTXbuff0, "Motor Status %u \n\r",MotorStatus);
-	  //HAL_UART_Transmit ( &huart1, UartTXbuff0, strlen( UartTXbuff0 ), 1 );
+	  sprintf(UartTXbuff0, "Motor Status %u \n\r",MotorStatus);
+	  HAL_UART_Transmit ( &huart1, UartTXbuff0, strlen( UartTXbuff0 ), 1 );
 
 
 	  sprintf(UartTXbuff0, "ThrottleIN %.2f \n\r",ThrottleINscaled);
 	  HAL_UART_Transmit ( &huart1, UartTXbuff0, strlen( UartTXbuff0 ), 1 );
 
 
-	  //sprintf(UartTXbuff0, "PitchIN %.2f \n\r",PitchINscaled);
-	  //HAL_UART_Transmit ( &huart1, UartTXbuff0, strlen( UartTXbuff0 ), 1 );
+	  sprintf(UartTXbuff0, "PitchIN %.2f \n\r",PitchINscaled);
+	  HAL_UART_Transmit ( &huart1, UartTXbuff0, strlen( UartTXbuff0 ), 1 );
 
 
-	  //sprintf(UartTXbuff0, "RollIN %.2f \n\r",RollINscaled);
-	  //HAL_UART_Transmit ( &huart1, UartTXbuff0, strlen( UartTXbuff0 ), 1 );
+	  sprintf(UartTXbuff0, "RollIN %.2f \n\r",RollINscaled);
+	  HAL_UART_Transmit ( &huart1, UartTXbuff0, strlen( UartTXbuff0 ), 1 );
 
-
-	  //sprintf(UartTXbuff0, "YawIN %.2f \n\r",YawINscaled);
-	  //HAL_UART_Transmit ( &huart1, UartTXbuff0, strlen( UartTXbuff0 ), 1 );
+	  sprintf(UartTXbuff0, "YawIN %.2f \n\r",YawINscaled);
+	  HAL_UART_Transmit ( &huart1, UartTXbuff0, strlen( UartTXbuff0 ), 1 );
 
 	  //sprintf(UartTXbuff0, "Pot1=%u Pot2=%u \n\r",potenc1,potenc2);
 	  //HAL_UART_Transmit ( &huart1, UartTXbuff0, strlen( UartTXbuff0 ), 1 );
@@ -302,11 +301,15 @@ int main(void)
 	  //sprintf(UartTXbuff0, "ButtL=%u ButtD=%u \n\r",buttL,buttD);
 	  //HAL_UART_Transmit ( &huart1, UartTXbuff0, strlen( UartTXbuff0 ), 1 );
 
-	  //sprintf(UartTXbuff0, "MSG RECV=%u \n\r",watch1);
-	  //HAL_UART_Transmit ( &huart1, UartTXbuff0, strlen( UartTXbuff0 ), 1 );
+	  sprintf(UartTXbuff0, "wfl1=%.3f \n\r",wfl1);
+	  HAL_UART_Transmit ( &huart1, UartTXbuff0, strlen( UartTXbuff0 ), 1 );
 
-	 // sprintf(UartTXbuff0, "MSG SEND=%u \n\r",watch2);
-	  //HAL_UART_Transmit ( &huart1, UartTXbuff0, strlen( UartTXbuff0 ), 1 );
+	  sprintf(UartTXbuff0, "wfl2=%.3f \n\r",wfl2);
+	  HAL_UART_Transmit ( &huart1, UartTXbuff0, strlen( UartTXbuff0 ), 1 );
+
+	  sprintf(UartTXbuff0, "wfl3=%.3f \n\r",wfl3);
+	  HAL_UART_Transmit ( &huart1, UartTXbuff0, strlen( UartTXbuff0 ), 1 );
+
 
 	  //sprintf(UartTXbuff0, "GYROX=%d Off=%d\n\r",GyroXcal,GyroXOff);
 	  //HAL_UART_Transmit ( &huart1, UartTXbuff0, strlen( UartTXbuff0 ), 1 );
@@ -317,14 +320,14 @@ int main(void)
 	  //sprintf(UartTXbuff0, "GYROZ=%d Off=%d\n\r",GyroZcal,GyroZOff);
 	  //HAL_UART_Transmit ( &huart1, UartTXbuff0, strlen( UartTXbuff0 ), 1 );
 
-	  //sprintf(UartTXbuff0, "ACC X RAW=%d \n\r",mpu6050DataStr.Accelerometer_X);
-	  //HAL_UART_Transmit ( &huart1, UartTXbuff0, strlen( UartTXbuff0 ), 1 );
+	  sprintf(UartTXbuff0, "ACC X RAW=%d \n\r",mpu6050DataStr.Gyroscope_X);
+	  HAL_UART_Transmit ( &huart1, UartTXbuff0, strlen( UartTXbuff0 ), 1 );
 
-	  //sprintf(UartTXbuff0, "ACC Y RAW=%d \n\r",mpu6050DataStr.Accelerometer_Y);
-	  //HAL_UART_Transmit ( &huart1, UartTXbuff0, strlen( UartTXbuff0 ), 1 );
+	  sprintf(UartTXbuff0, "ACC Y RAW=%d \n\r",mpu6050DataStr.Gyroscope_Y);
+	  HAL_UART_Transmit ( &huart1, UartTXbuff0, strlen( UartTXbuff0 ), 1 );
 
-	  //sprintf(UartTXbuff0, "ACC Z RAW=%d \n\r",mpu6050DataStr.Accelerometer_Z);
-	  //HAL_UART_Transmit ( &huart1, UartTXbuff0, strlen( UartTXbuff0 ), 1 );
+	  sprintf(UartTXbuff0, "ACC Z RAW=%d \n\r",mpu6050DataStr.Gyroscope_Z);
+	  HAL_UART_Transmit ( &huart1, UartTXbuff0, strlen( UartTXbuff0 ), 1 );
 
 	  //sprintf(UartTXbuff0, "PchGy=%.2f PchAcc=%.2f \n\r",AnglePitchGyro,AnglePitchAccel);
 	  //HAL_UART_Transmit ( &huart1, UartTXbuff0, strlen( UartTXbuff0 ), 1 );
@@ -332,11 +335,11 @@ int main(void)
 	  //sprintf(UartTXbuff0, "RollGy=%.2f RollAcc=%.2f \n\r",AngleRollGyro,AngleRollAccel);
 	  //HAL_UART_Transmit ( &huart1, UartTXbuff0, strlen( UartTXbuff0 ), 1 );
 
-	  //sprintf(UartTXbuff0, "Pitch=%.2f \n\r",AnglePitch);
-	  //HAL_UART_Transmit ( &huart1, UartTXbuff0, strlen( UartTXbuff0 ), 1 );
+	  sprintf(UartTXbuff0, "Pitch=%.2f \n\r",AnglePitch);
+	  HAL_UART_Transmit ( &huart1, UartTXbuff0, strlen( UartTXbuff0 ), 1 );
 
-	  //sprintf(UartTXbuff0, "Roll=%.2f \n\r",AngleRoll);
-	  //HAL_UART_Transmit ( &huart1, UartTXbuff0, strlen( UartTXbuff0 ), 1 );
+	  sprintf(UartTXbuff0, "Roll=%.2f \n\r",AngleRoll);
+	  HAL_UART_Transmit ( &huart1, UartTXbuff0, strlen( UartTXbuff0 ), 1 );
 
 	  sprintf(UartTXbuff0, "PWM Mot1=%u \n\r",PWM_Mot1);
 	  HAL_UART_Transmit ( &huart1, UartTXbuff0, strlen( UartTXbuff0 ), 1 );
@@ -350,11 +353,7 @@ int main(void)
 	  sprintf(UartTXbuff0, "PWM Mot4=%u \n\r",PWM_Mot4);
 	  HAL_UART_Transmit ( &huart1, UartTXbuff0, strlen( UartTXbuff0 ), 1 );
 
-	  sprintf(UartTXbuff0, "wfl1=%.2f \n\r",wfl1);
-	  HAL_UART_Transmit ( &huart1, UartTXbuff0, strlen( UartTXbuff0 ), 1 );
-
-
-	  sprintf(UartTXbuff0, "wfl2=%.2f \n\r",wfl2);
+	  sprintf(UartTXbuff0, "PID roll=%.2f \n\r",pid_output_roll);
 	  HAL_UART_Transmit ( &huart1, UartTXbuff0, strlen( UartTXbuff0 ), 1 );
 
 	  //sprintf(UartTXbuff0, "PID pitch=%.2f \n\r",pid_output_pitch);
@@ -364,12 +363,6 @@ int main(void)
 	  //HAL_UART_Transmit ( &huart1, UartTXbuff0, strlen( UartTXbuff0 ), 1 );
 
 	  //sprintf(UartTXbuff0, "PID yaw=%.2f \n\r",pid_output_yaw);
-	  //HAL_UART_Transmit ( &huart1, UartTXbuff0, strlen( UartTXbuff0 ), 1 );
-
-	  //sprintf(UartTXbuff0, "pitch adj=%.2f \n\r",PitchAutoAdjust);
-	  //HAL_UART_Transmit ( &huart1, UartTXbuff0, strlen( UartTXbuff0 ), 1 );
-
-	  //sprintf(UartTXbuff0, "roll adj=%.2f \n\r",RollAutoAdjust);
 	  //HAL_UART_Transmit ( &huart1, UartTXbuff0, strlen( UartTXbuff0 ), 1 );
 
 	  //sprintf(UartTXbuff0, "\n\r" );
