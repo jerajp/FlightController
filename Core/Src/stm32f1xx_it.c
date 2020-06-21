@@ -68,7 +68,11 @@ uint32_t MSGprerSecond;
 uint32_t MSGcount;
 uint32_t ConnectWeakFlag;
 uint32_t MSGLowCount;
+uint8_t TESTERFUCKING=0;
 
+uint32_t Gyrocalibcount=0;
+uint8_t AnglePitchDIR,AngleRollDIR;		//+- direction of angles for NRF24 sending
+uint8_t AngleRollNRF24,AnglePitchNRF24; //positive angles for NRF24 sending
 float AnglePitch, AnglePitchGyro,AnglePitchAccel;
 float AngleRoll, AngleRollGyro, AngleRollAccel;
 float Acc_vector;
@@ -114,6 +118,10 @@ float yaw_integral=0;
 float yaw_diffErrHist=0;
 
 uint32_t togg1hist;
+uint32_t butt1hist;
+uint32_t butt2hist;
+uint32_t butt3hist;
+uint32_t butt4hist;
 
 /* USER CODE END PV */
 
@@ -310,6 +318,11 @@ void TIM2_IRQHandler(void)
   BattmVAVG=BattmVSUM/(BATTAVERAGETIME);
   //-------------------------------------------------------------------------
 
+  //save OLD button states
+  butt1hist=butt1;
+  butt2hist=butt2;
+  butt3hist=butt3;
+  butt4hist=butt4;
 
   //NRF24--------------------------------------------------------------------
   //Ping for RX data when RXflag is SET
@@ -342,6 +355,8 @@ void TIM2_IRQHandler(void)
   				butt4=(nRF24_payloadRX[6] & 4 )>>2;
   				buttL=(nRF24_payloadRX[6] & 2 )>>1;
   				buttD=(nRF24_payloadRX[6] & 1 );
+
+
   			}
   			SendBackFlag=1;
   			RXactiveFlag=0;
@@ -368,8 +383,37 @@ void TIM2_IRQHandler(void)
   	 	 			nRF24_payloadTX[0] = (uint8_t)(BattmVAVG & 0xFF);
   	 	 			nRF24_payloadTX[1] = (uint8_t)((BattmVAVG & 0xFF00)>>8);
 
+
+  	 	 			//save Angle for NRF24 transfer
+  	 	 			if(AnglePitch<0)
+  	 	 			{
+  	 	 				AnglePitchDIR=1;
+  	 	 				AnglePitchNRF24=AnglePitch*(-1);
+  	 	 			}
+  	 	 			else
+  	 	 			{
+  	 	 				AnglePitchDIR=0;
+  	 	 				AnglePitchNRF24=AnglePitch;
+  	 	 			}
+
+
+  	 	 			if(AngleRoll<0)
+  	 	 			{
+  	 	 				AngleRollDIR=1;
+  	 	 				AngleRollNRF24=AngleRoll*(-1);
+  	 	 			}
+  	 	 			else
+  	 	 			{
+  	 	 				AngleRollDIR=0;
+  	 	 				AngleRollNRF24=AngleRoll;
+  	 	 			}
+
+  	 	 			nRF24_payloadTX[2] = (uint8_t)(AnglePitchNRF24);
+  	 	 			nRF24_payloadTX[3] = (uint8_t)(AngleRollNRF24);
+  	 	 			nRF24_payloadTX[4] = (uint8_t)(AnglePitchDIR + (AngleRollDIR<<1) + (GyroCalibStatus<<2) + ((MotorStatus & 0x7)<<3) ); //1bit Pitch DIR, 1bit Roll DIR, 1 bit GyroCalinFlag, 3 bit MotorStatus
+
   	 	 			// Transmit a packet
-  	 	 			nRF24_TransmitPacket(nRF24_payloadTX, 2);
+  	 	 			nRF24_TransmitPacket(nRF24_payloadTX, 5);
   	 	 	 	 }break;
 
       	case 5:
@@ -406,7 +450,6 @@ void TIM2_IRQHandler(void)
     		MSGcount=0;
     		LoopCounter=0;
   }//-----------------------------------------------------------------
-
   //MPU 6050-----------------------------------------------------------
 
   MPU6050_accread(&hi2c2,&mpu6050DataStr);
@@ -434,39 +477,41 @@ void TIM2_IRQHandler(void)
   AnglePitch=0.998*AnglePitchGyro + 0.002*AnglePitchAccel;
   AngleRoll=0.998*AngleRollGyro + 0.002*AngleRollAccel;
 
-  //GYRO Data deg/s for 3 PID loops Filtered
+
+  //PID input Filtered
   PitchGyroPIDin =  (PitchGyroPIDin * 0.7) + (AnglePitch * 0.3);
   RollGyroPIDin = (RollGyroPIDin * 0.7) + (AngleRoll * 0.3);
   //YawGyroPIDin = (YawGyroPIDin * 0.7) + (GyroZcal * GYROFACTORANGLEDEG * 0.3);
   //-------------------------------------------------------------------
 
   //SCALE DATA
-
   //Input Controller Center to MAX 50 - >100  --->0-800 us
-  ThrottleINscaled=ScaleDataFl(Ljoyupdown,50,100,MINTRHOTTLE,THROTTLESCALE);//throttle limit to 80%
+  //ThrottleINscaled=ScaleDataFl(Ljoyupdown,50,100,MINTRHOTTLE,THROTTLESCALE);//throttle limit to 80%
 
   //TESTING potenciometer=throttle
   ThrottleINscaled=ScaleDataFl(potenc1,0,100,0,1000);//direct 10-100 -->0-1000 testing
 
-  //Pitch UP->DOWN 0 -> 100 -----> -45 ->45 deg/s
-  PitchINscaled=ScaleDataFl(Djoyupdown,0,100,-MAXPITCHSCALE,MAXPITCHSCALE);
+  //Pitch UP->DOWN 0-100 ->scaling
+  PitchINscaled=ScaleDataFl(Djoyupdown,0,100,-MAXPITCHSCALE,+MAXPITCHSCALE);
+  //Invert
+  PitchINscaled*=(-1);
 
-  //Roll LEFT->RIGHT 0 -> 100 -----> -45 ->45 deg/s
+  //Roll LEFT->RIGHT 0 -> 100 -> scaling
   RollINscaled=ScaleDataFl(Djoyleftright,0,100,-MAXROLLSCALE,MAXROLLSCALE);
 
-  //Roll LEFT->RIGHT 0 -> 100 -----> -180 ->180 deg/s
+  //Roll LEFT->RIGHT 0 -> 100 ->scaling
   YawINscaled=ScaleDataFl(Ljoyleftright,0,100,-MAXYAWSCALE,MAXYAWSCALE);
 
-  //TESTING
-  pid_p_gain_roll=potenc2*0.1;
+  //MOTOR CONTROL
+
+
+  //PID tunning
+  //pid_p_gain_roll=potenc2*0.1;
   //pid_d_gain_roll=potenc1*8;
   //pid_i_gain_roll=potenc2*0.0001;
   wfl1=pid_p_gain_roll;
   wfl2=pid_d_gain_roll;
   wfl3=pid_i_gain_roll;
-
-  //test
-  //ThrottleINscaled=500;
 
   //PID
   pid_output_pitch = pid(PitchINscaled, PitchGyroPIDin, pid_p_gain_pitch, pid_i_gain_pitch, pid_d_gain_pitch,&pitch_integral, &pitch_diffErrHist, pid_i_max_pitch, pid_max_pitch);
@@ -474,28 +519,55 @@ void TIM2_IRQHandler(void)
   //pid_output_yaw = pid(YawINscaled, YawGyroPIDin, pid_p_gain_yaw, pid_i_gain_yaw, pid_d_gain_yaw, &yaw_integral,&yaw_diffErrHist,pid_i_max_roll, pid_max_yaw );
 
   //TESTING
-  if(ConnectWeakFlag==1)MotorStatus=0;//if connection is lost!
-
-
-  //AutoLevel ON/OFF (TOGGLE 2)
-  if(togg2==1)AutoLevel=1;
-  else AutoLevel=0;
+  if(ConnectWeakFlag==1)MotorStatus=MOTOROFF;//if connection is lost!
 
   //Motor STATUS (TOGGLE 1)
   //ON toggle 0->1 front start motor ON sequence
-  if(togg1hist!=togg1 && togg1==1)MotorStatus=1;
+  if(togg1hist!=togg1 && togg1==1)MotorStatus=MOTORSTARTING;
   togg1hist=togg1;
 
   //ON toggle 0-> motor always OFF
-  if(togg1==0)MotorStatus=0;
+  if(togg1==0)MotorStatus=MOTOROFF;
 
-  if(MotorStatus==1)
+  //GYROCALIB-----------------------------------------------------------------------------------------
+  if(butt3hist==0 && butt3==1 && GyroCalibStatus==0 && MotorStatus==MOTOROFF) //button 2 pressed Motor OFF Calib not in progress
+  {
+	  GyroCalibStatus=1;
+	  SUMGyroX=0;
+	  SUMGyroY=0;
+	  SUMGyroZ=0;
+	  Gyrocalibcount=0;
+  }
+  if(GyroCalibStatus==1)
+  {
+	  SUMGyroX+=mpu6050DataStr.Gyroscope_X;
+	  SUMGyroY+=mpu6050DataStr.Gyroscope_Y;
+	  SUMGyroZ+=mpu6050DataStr.Gyroscope_Z;
+	  Gyrocalibcount++;
+
+	  if(Gyrocalibcount==GYROCALIBVALUES)
+	  {
+
+		  GyroXOff=SUMGyroX/GYROCALIBVALUES;
+		  GyroYOff=SUMGyroY/GYROCALIBVALUES;
+		  GyroZOff=SUMGyroZ/GYROCALIBVALUES;
+
+		  //startup angles Accel to Gyro transfer
+		  AnglePitchGyro=AnglePitchAccel;
+		  AngleRollGyro=AngleRollAccel;
+
+		  GyroCalibStatus=0;
+	  }
+  }//--------------------------------------------------------------------------------------------------
+
+  if(MotorStatus==MOTORSTARTING)
   {
 	  //startup angles Accel to Gyro transfer
 	  AnglePitchGyro=AnglePitchAccel;
 	  AngleRollGyro=AngleRollAccel;
 
-	  MotorStatus=2;
+	  if(GyroCalibStatus==0)//only if calib is finished allow transition
+	  MotorStatus=MOTORRUNNING;
   }
 
   //MOT 1 FRONT LEFT  CW
@@ -504,12 +576,12 @@ void TIM2_IRQHandler(void)
   //MOT 4 BACK  LEFT  CCW
   switch(MotorStatus)
   {
-  	  case 2:
+  	  case MOTORRUNNING:
   	  	  	  {
-  	  	  		  PWM_Mot1=1000 + ThrottleINscaled  + pid_output_pitch - pid_output_roll /*+ pid_output_yaw*/;
-  	  		  	  PWM_Mot2=1000 + ThrottleINscaled  + pid_output_pitch + pid_output_roll /*- pid_output_yaw*/;
-  	  		  	  PWM_Mot3=1000 + ThrottleINscaled  - pid_output_pitch + pid_output_roll /*+ pid_output_yaw*/;
-  	  		  	  PWM_Mot4=1000 + ThrottleINscaled  - pid_output_pitch - pid_output_roll /*- pid_output_yaw*/;
+  	  	  		  PWM_Mot1=1000 + ThrottleINscaled  - pid_output_pitch - pid_output_roll /*+ pid_output_yaw*/;
+  	  		  	  PWM_Mot2=1000 + ThrottleINscaled  - pid_output_pitch + pid_output_roll /*- pid_output_yaw*/;
+  	  		  	  PWM_Mot3=1000 + ThrottleINscaled  + pid_output_pitch + pid_output_roll /*+ pid_output_yaw*/;
+  	  		  	  PWM_Mot4=1000 + ThrottleINscaled  + pid_output_pitch - pid_output_roll /*- pid_output_yaw*/;
 
   	  		  	  //MIN OBRATI
   	  		  	  if(PWM_Mot1 < (1000+ MINTRHOTTLE))PWM_Mot1=(1000+ MINTRHOTTLE);
@@ -592,7 +664,6 @@ float pid(float pid_reference, float pid_input, float pid_p, float pid_i, float 
 
 	return out;
 }
-
 
 /* USER CODE END 1 */
 /************************ (C) COPYRIGHT STMicroelectronics *****END OF FILE****/

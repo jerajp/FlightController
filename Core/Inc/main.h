@@ -50,6 +50,13 @@ extern "C" {
 #define LED1_OFF  GPIOC->BSRR=0x00002000  	 // 1 << (13)  HW LED is inverted
 #define LED1_ON GPIOC->BSRR=0x20000000       // 1 << (16+13)
 
+//MotorStates
+#define MOTORINIT 		0
+#define MOTOROFF 		1
+#define MOTORSTARTING 	2
+#define MOTORRUNNING	3
+
+
 #define VDIVRESISTOR1	6800 //Battery voltage dividers
 #define VDIVRESISTOR2 	1475
 #define BATTADCTOMV	(float)( (float)((VDIVRESISTOR1 + VDIVRESISTOR2) * 3300) / (float)((VDIVRESISTOR2 * 4095)) )
@@ -63,10 +70,11 @@ extern "C" {
 #define READIANSTODEGREES (float)(57.29578)
 #define ACCELPITCHMANUALOFFSET (float)(0.2)		//spirit level offset in degrees
 #define ACCELROLLMANUALOFFSET (float)(2.2)		//spirit level offset in degrees
+#define GYROCALIBVALUES 1000
 
 //MAX VALUES SCALING
-#define MAXPITCHSCALE 	  (float)(45)   //degrees
-#define MAXROLLSCALE 	  (float)(45)   //degrees
+#define MAXPITCHSCALE 	  (float)(20)   //degrees
+#define MAXROLLSCALE 	  (float)(20)   //degrees
 #define MAXYAWSCALE		  (float)(180)  //180degrees
 #define THROTTLESCALE	  (float)(800)  //800counts of 1000 (80%)
 #define MINTRHOTTLE		  80           //200count out of 1000 to keep rotors spinning
@@ -84,7 +92,7 @@ extern uint32_t watch1,watch2,watch3,watch4,watch5,test1,test2,test3,test5;
 extern float wfl1,wfl2,wfl3,wfl4;
 extern uint16_t AdcDataArray[1];
 extern uint32_t MotorStatus;
-extern uint32_t AutoLevel;
+extern uint32_t GyroCalibStatus;
 
 extern TIM_HandleTypeDef htim1;
 extern ADC_HandleTypeDef hadc1;
@@ -113,6 +121,7 @@ extern uint32_t buttD;
 //MPU 6050
 extern int16_t GyroXcal,GyroYcal,GyroZcal;
 extern int16_t GyroXOff,GyroYOff,GyroZOff;
+extern int32_t SUMGyroX,SUMGyroY,SUMGyroZ;
 extern MPU6050str	mpu6050DataStr;
 
 //Inputs
@@ -131,9 +140,6 @@ extern uint32_t PWM_Mot4;
 extern float pid_output_pitch;
 extern float pid_output_roll;
 extern float pid_output_yaw;
-
-extern float PitchAutoAdjust;
-extern float RollAutoAdjust;
 
 /* USER CODE END EFP */
 

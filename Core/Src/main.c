@@ -95,8 +95,8 @@ uint32_t i=0;
 char UartTXbuff0[100];
 
 //MOTOR
-uint32_t MotorStatus=0;
-uint32_t AutoLevel=0;
+uint32_t MotorStatus=MOTORINIT;
+uint32_t GyroCalibStatus=0;
 
 /* USER CODE END PV */
 
@@ -215,9 +215,13 @@ int main(void)
   nRF24_CE_H();//Enable RX
 
   //get GYRO offset
+  HAL_Delay(2000);//wait to connect battery
+  GyroCalibStatus=1;
+
   SUMGyroX=0;
   SUMGyroY=0;
   SUMGyroZ=0;
+
   for(i=0;i<1000;i++)
   {
 	  MPU6050_gyroread(&hi2c2,&mpu6050DataStr);
@@ -225,18 +229,24 @@ int main(void)
 	  SUMGyroY+=mpu6050DataStr.Gyroscope_Y;
 	  SUMGyroZ+=mpu6050DataStr.Gyroscope_Z;
 	  HAL_Delay(1);
-	  watch2++;
   }
+
   GyroXOff=SUMGyroX/1000;
   GyroYOff=SUMGyroY/1000;
   GyroZOff=SUMGyroZ/1000;
 
+  GyroCalibStatus=0;
+
+  //startup angles Accel to Gyro transfer
+  AnglePitchGyro=AnglePitchAccel;
+  AngleRollGyro=AngleRollAccel;
 
   HAL_TIM_PWM_Start(&htim1, TIM_CHANNEL_1);
   HAL_TIM_PWM_Start(&htim1, TIM_CHANNEL_2);
   HAL_TIM_PWM_Start(&htim1, TIM_CHANNEL_3);
   HAL_TIM_PWM_Start(&htim1, TIM_CHANNEL_4);
 
+  MotorStatus=MOTOROFF;
   HAL_TIM_Base_Start_IT(&htim2);//Start at the END of Main Initialization
 
   ///-----------------
@@ -356,11 +366,8 @@ int main(void)
 	  sprintf(UartTXbuff0, "PID roll=%.2f \n\r",pid_output_roll);
 	  HAL_UART_Transmit ( &huart1, UartTXbuff0, strlen( UartTXbuff0 ), 1 );
 
-	  //sprintf(UartTXbuff0, "PID pitch=%.2f \n\r",pid_output_pitch);
-	  //HAL_UART_Transmit ( &huart1, UartTXbuff0, strlen( UartTXbuff0 ), 1 );
-
-	  //sprintf(UartTXbuff0, "PID roll=%.2f \n\r",pid_output_roll);
-	  //HAL_UART_Transmit ( &huart1, UartTXbuff0, strlen( UartTXbuff0 ), 1 );
+	  sprintf(UartTXbuff0, "PID pitch=%.2f \n\r",pid_output_pitch);
+	  HAL_UART_Transmit ( &huart1, UartTXbuff0, strlen( UartTXbuff0 ), 1 );
 
 	  //sprintf(UartTXbuff0, "PID yaw=%.2f \n\r",pid_output_yaw);
 	  //HAL_UART_Transmit ( &huart1, UartTXbuff0, strlen( UartTXbuff0 ), 1 );
