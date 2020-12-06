@@ -58,7 +58,6 @@ UART_HandleTypeDef huart1;
 
 /* USER CODE BEGIN PV */
 uint32_t watch1,watch2,watch3,watch4,watch5,test1,test2,test3,test5;
-float wfl1,wfl2,wfl3,wfl4;
 
 //NRF24
 uint8_t nRF24_payloadTX[32]; //TX buffer
@@ -76,12 +75,10 @@ uint32_t potenc1;
 uint32_t potenc2;
 uint32_t togg1;
 uint32_t togg2;
-uint32_t butt1;
-uint32_t butt2;
-uint32_t butt3;
-uint32_t butt4;
-uint32_t buttL;
-uint32_t buttD;
+uint32_t togg3;
+uint32_t togg4;
+uint32_t togg5;
+uint32_t togg6;
 
 //MPU6050
 MPU6050_Result MPU6050rezulatat ;
@@ -97,6 +94,10 @@ char UartTXbuff0[100];
 //MOTOR
 uint32_t MotorStatus=MOTORINIT;
 uint32_t GyroCalibStatus=0;
+
+struct FlashDatastruct FlashDataDefault; //Default constant embedded in Code
+struct FlashDatastruct FlashDataFlash;  //Constants read from Flash
+struct FlashDatastruct FlashDataActive; //Active constants
 
 /* USER CODE END PV */
 
@@ -161,6 +162,38 @@ int main(void)
 
   HAL_ADCEx_Calibration_Start(&hadc1);
   HAL_ADC_Start(&hadc1);
+
+  //DEFAULT FLASH CONSTANTS--------------------------------------------------------------------------
+  FlashDataDefault.controlData=CONTROLWORD;
+  FlashDataDefault.pid_p_gain_pitch=5.0;
+  FlashDataDefault.pid_i_gain_pitch=0.001;
+  FlashDataDefault.pid_d_gain_pitch=500.0;
+  FlashDataDefault.pid_p_gain_roll=5.0;
+  FlashDataDefault.pid_i_gain_roll=0.001;
+  FlashDataDefault.pid_d_gain_roll=500.0;
+  FlashDataDefault.pid_p_gain_yaw=4;
+  FlashDataDefault.pid_i_gain_yaw=0;
+  FlashDataDefault.pid_d_gain_yaw=0;
+  FlashDataDefault.pid_max_pitch = 400;
+  FlashDataDefault.pid_i_max_pitch = 100;
+  FlashDataDefault.pid_max_roll = 400;
+  FlashDataDefault.pid_i_max_roll = 100;
+  FlashDataDefault.pid_max_yaw = 400;
+  FlashDataDefault.pid_i_max_yaw = 100;
+
+  if( CheckFlashData(FLASHCONSTADDR) == CONTROLWORD ) //Check if any Data is present
+  {
+	  //Read Data and Save parameters into ACTIVE structure
+	  ReadFlashData(FLASHCONSTADDR, &FlashDataActive);
+
+  }
+  else
+  {
+	  //Write default values into Flash, Read back data into Active Structure
+	  WriteFlashData(FLASHCONSTADDR, &FlashDataDefault);
+	  ReadFlashData(FLASHCONSTADDR, &FlashDataActive);
+  }//------------------------------------------------------------------------------------------------------
+
 
   HAL_Delay(400);//wait for stable power
 
@@ -268,112 +301,152 @@ int main(void)
 	  sprintf(UartTXbuff0,T_CLR_SCREEN);
 	  HAL_UART_Transmit ( &huart1, UartTXbuff0, strlen( UartTXbuff0 ), 1 );
 
-	  //if(wifiOK)
-	  //{
-	  //	  sprintf(UartTXbuff0, "Wifi OK \n\r");
-	 // }
-	  //else sprintf(UartTXbuff0, "Wifi Fail \n\r");
-	  //HAL_UART_Transmit ( &huart1, UartTXbuff0, strlen( UartTXbuff0 ), 1 );
 
-	  //sprintf(UartTXbuff0, "L-UD=%u L-LR=%u \n\r",Ljoyupdown,Ljoyleftright);
-	 // HAL_UART_Transmit ( &huart1, UartTXbuff0, strlen( UartTXbuff0 ), 1 );
-
-	  //sprintf(UartTXbuff0, "D-UD=%u D-LR=%u \n\r",Djoyupdown,Djoyleftright);
-	  //HAL_UART_Transmit ( &huart1, UartTXbuff0, strlen( UartTXbuff0 ), 1 );
 
 	  sprintf(UartTXbuff0, "Motor Status %u \n\r",MotorStatus);
 	  HAL_UART_Transmit ( &huart1, UartTXbuff0, strlen( UartTXbuff0 ), 1 );
+
 
 
 	  sprintf(UartTXbuff0, "ThrottleIN %.2f \n\r",ThrottleINscaled);
 	  HAL_UART_Transmit ( &huart1, UartTXbuff0, strlen( UartTXbuff0 ), 1 );
 
 
+
 	  sprintf(UartTXbuff0, "PitchIN %.2f \n\r",PitchINscaled);
 	  HAL_UART_Transmit ( &huart1, UartTXbuff0, strlen( UartTXbuff0 ), 1 );
+
 
 
 	  sprintf(UartTXbuff0, "RollIN %.2f \n\r",RollINscaled);
 	  HAL_UART_Transmit ( &huart1, UartTXbuff0, strlen( UartTXbuff0 ), 1 );
 
+
+
 	  sprintf(UartTXbuff0, "YawIN %.2f \n\r",YawINscaled);
 	  HAL_UART_Transmit ( &huart1, UartTXbuff0, strlen( UartTXbuff0 ), 1 );
 
-	  //sprintf(UartTXbuff0, "Pot1=%u Pot2=%u \n\r",potenc1,potenc2);
-	  //HAL_UART_Transmit ( &huart1, UartTXbuff0, strlen( UartTXbuff0 ), 1 );
 
-	  //sprintf(UartTXbuff0, "Togg1=%u Togg2=%u \n\r",togg1,togg2);
-	  //HAL_UART_Transmit ( &huart1, UartTXbuff0, strlen( UartTXbuff0 ), 1 );
-
-	  //sprintf(UartTXbuff0, "B1=%u B2=%u B3=%u B4=%u \n\r",butt1,butt2,butt3,butt4);
-	  //HAL_UART_Transmit ( &huart1, UartTXbuff0, strlen( UartTXbuff0 ), 1 );
-
-	  //sprintf(UartTXbuff0, "ButtL=%u ButtD=%u \n\r",buttL,buttD);
-	  //HAL_UART_Transmit ( &huart1, UartTXbuff0, strlen( UartTXbuff0 ), 1 );
-
-	  sprintf(UartTXbuff0, "wfl1=%.3f \n\r",wfl1);
-	  HAL_UART_Transmit ( &huart1, UartTXbuff0, strlen( UartTXbuff0 ), 1 );
-
-	  sprintf(UartTXbuff0, "wfl2=%.3f \n\r",wfl2);
-	  HAL_UART_Transmit ( &huart1, UartTXbuff0, strlen( UartTXbuff0 ), 1 );
-
-	  sprintf(UartTXbuff0, "wfl3=%.3f \n\r",wfl3);
-	  HAL_UART_Transmit ( &huart1, UartTXbuff0, strlen( UartTXbuff0 ), 1 );
-
-
-	  //sprintf(UartTXbuff0, "GYROX=%d Off=%d\n\r",GyroXcal,GyroXOff);
-	  //HAL_UART_Transmit ( &huart1, UartTXbuff0, strlen( UartTXbuff0 ), 1 );
-
-	  //sprintf(UartTXbuff0, "GYROY=%d Off=%d\n\r",GyroYcal,GyroYOff);
-	  //HAL_UART_Transmit ( &huart1, UartTXbuff0, strlen( UartTXbuff0 ), 1 );
-
-	  //sprintf(UartTXbuff0, "GYROZ=%d Off=%d\n\r",GyroZcal,GyroZOff);
-	  //HAL_UART_Transmit ( &huart1, UartTXbuff0, strlen( UartTXbuff0 ), 1 );
-
-	  sprintf(UartTXbuff0, "ACC X RAW=%d \n\r",mpu6050DataStr.Gyroscope_X);
-	  HAL_UART_Transmit ( &huart1, UartTXbuff0, strlen( UartTXbuff0 ), 1 );
-
-	  sprintf(UartTXbuff0, "ACC Y RAW=%d \n\r",mpu6050DataStr.Gyroscope_Y);
-	  HAL_UART_Transmit ( &huart1, UartTXbuff0, strlen( UartTXbuff0 ), 1 );
-
-	  sprintf(UartTXbuff0, "ACC Z RAW=%d \n\r",mpu6050DataStr.Gyroscope_Z);
-	  HAL_UART_Transmit ( &huart1, UartTXbuff0, strlen( UartTXbuff0 ), 1 );
-
-	  //sprintf(UartTXbuff0, "PchGy=%.2f PchAcc=%.2f \n\r",AnglePitchGyro,AnglePitchAccel);
-	  //HAL_UART_Transmit ( &huart1, UartTXbuff0, strlen( UartTXbuff0 ), 1 );
-
-	  //sprintf(UartTXbuff0, "RollGy=%.2f RollAcc=%.2f \n\r",AngleRollGyro,AngleRollAccel);
-	  //HAL_UART_Transmit ( &huart1, UartTXbuff0, strlen( UartTXbuff0 ), 1 );
 
 	  sprintf(UartTXbuff0, "Pitch=%.2f \n\r",AnglePitch);
 	  HAL_UART_Transmit ( &huart1, UartTXbuff0, strlen( UartTXbuff0 ), 1 );
 
+
+
 	  sprintf(UartTXbuff0, "Roll=%.2f \n\r",AngleRoll);
 	  HAL_UART_Transmit ( &huart1, UartTXbuff0, strlen( UartTXbuff0 ), 1 );
+
+
 
 	  sprintf(UartTXbuff0, "PWM Mot1=%u \n\r",PWM_Mot1);
 	  HAL_UART_Transmit ( &huart1, UartTXbuff0, strlen( UartTXbuff0 ), 1 );
 
+
+
 	  sprintf(UartTXbuff0, "PWM Mot2=%u \n\r",PWM_Mot2);
 	  HAL_UART_Transmit ( &huart1, UartTXbuff0, strlen( UartTXbuff0 ), 1 );
+
+
 
 	  sprintf(UartTXbuff0, "PWM Mot3=%u \n\r",PWM_Mot3);
 	  HAL_UART_Transmit ( &huart1, UartTXbuff0, strlen( UartTXbuff0 ), 1 );
 
+
+
 	  sprintf(UartTXbuff0, "PWM Mot4=%u \n\r",PWM_Mot4);
 	  HAL_UART_Transmit ( &huart1, UartTXbuff0, strlen( UartTXbuff0 ), 1 );
 
-	  sprintf(UartTXbuff0, "PID roll=%.2f \n\r",pid_output_roll);
+
+
+	  sprintf(UartTXbuff0, "\n\rINPUTS \n\r" );
 	  HAL_UART_Transmit ( &huart1, UartTXbuff0, strlen( UartTXbuff0 ), 1 );
 
-	  sprintf(UartTXbuff0, "PID pitch=%.2f \n\r",pid_output_pitch);
+
+
+	  sprintf(UartTXbuff0, "Toggle %d %d %d %d %d %d \n\r",togg1,togg2,togg3,togg4,togg5,togg6);
 	  HAL_UART_Transmit ( &huart1, UartTXbuff0, strlen( UartTXbuff0 ), 1 );
 
-	  //sprintf(UartTXbuff0, "PID yaw=%.2f \n\r",pid_output_yaw);
-	  //HAL_UART_Transmit ( &huart1, UartTXbuff0, strlen( UartTXbuff0 ), 1 );
 
-	  //sprintf(UartTXbuff0, "\n\r" );
-	  //HAL_UART_Transmit ( &huart1, UartTXbuff0, strlen( UartTXbuff0 ), 1 );
+
+	  sprintf(UartTXbuff0, "Potenc %d %d \n\r",potenc1,potenc2);
+	  HAL_UART_Transmit ( &huart1, UartTXbuff0, strlen( UartTXbuff0 ), 1 );
+
+
+
+	  sprintf(UartTXbuff0, "YL %d %d  YD %d %d \n\r",Ljoyupdown, Ljoyleftright, Djoyupdown, Djoyleftright);
+	  HAL_UART_Transmit ( &huart1, UartTXbuff0, strlen( UartTXbuff0 ), 1 );
+
+
+
+	  //ACTIVE PID CONSTANTS
+	  sprintf(UartTXbuff0, "\n\rPID Constants Active  \n\r" );
+	  HAL_UART_Transmit ( &huart1, UartTXbuff0, strlen( UartTXbuff0 ), 1 );
+
+
+
+	  sprintf(UartTXbuff0, "Pitch P=%.2f I=%.5f D=%.2f \n\r",FlashDataActive.pid_p_gain_pitch, FlashDataActive.pid_i_gain_pitch, FlashDataActive.pid_d_gain_pitch);
+	  HAL_UART_Transmit ( &huart1, UartTXbuff0, strlen( UartTXbuff0 ), 1 );
+
+
+
+	  sprintf(UartTXbuff0, "Roll P=%.2f I=%.5f D=%.2f \n\r",FlashDataActive.pid_p_gain_roll, FlashDataActive.pid_i_gain_roll, FlashDataActive.pid_d_gain_roll);
+	  HAL_UART_Transmit ( &huart1, UartTXbuff0, strlen( UartTXbuff0 ), 1 );
+
+
+
+	  sprintf(UartTXbuff0, "Yaw P=%.2f I=%.5f D=%.2f \n\r",FlashDataActive.pid_p_gain_yaw, FlashDataActive.pid_i_gain_yaw, FlashDataActive.pid_d_gain_yaw);
+	  HAL_UART_Transmit ( &huart1, UartTXbuff0, strlen( UartTXbuff0 ), 1 );
+
+
+
+	  sprintf(UartTXbuff0, "Pitch Max %d Max I %d \n\r",FlashDataActive.pid_max_pitch, FlashDataActive.pid_i_max_pitch);
+	  HAL_UART_Transmit ( &huart1, UartTXbuff0, strlen( UartTXbuff0 ), 1 );
+
+
+
+	  sprintf(UartTXbuff0, "Roll Max %d Max I %d \n\r",FlashDataActive.pid_max_roll, FlashDataActive.pid_i_max_roll);
+	  HAL_UART_Transmit ( &huart1, UartTXbuff0, strlen( UartTXbuff0 ), 1 );
+
+
+
+	  sprintf(UartTXbuff0, "Yaw Max %d Max I %d \n\r",FlashDataActive.pid_max_yaw, FlashDataActive.pid_i_max_yaw);
+	  HAL_UART_Transmit ( &huart1, UartTXbuff0, strlen( UartTXbuff0 ), 1 );
+
+
+
+	  //FLASH PID CONSTANTS
+	  sprintf(UartTXbuff0, "\n\rPID Constants Flash  \n\r\n\r" );
+	  HAL_UART_Transmit ( &huart1, UartTXbuff0, strlen( UartTXbuff0 ), 1 );
+
+
+
+	  sprintf(UartTXbuff0, "Pitch P=%.2f I=%.5f D=%.2f \n\r",FlashDataFlash.pid_p_gain_pitch, FlashDataFlash.pid_i_gain_pitch, FlashDataFlash.pid_d_gain_pitch);
+	  HAL_UART_Transmit ( &huart1, UartTXbuff0, strlen( UartTXbuff0 ), 1 );
+
+
+
+	  sprintf(UartTXbuff0, "Roll P=%.2f I=%.5f D=%.2f \n\r",FlashDataFlash.pid_p_gain_roll, FlashDataFlash.pid_i_gain_roll, FlashDataFlash.pid_d_gain_roll);
+	  HAL_UART_Transmit ( &huart1, UartTXbuff0, strlen( UartTXbuff0 ), 1 );
+
+
+
+	  sprintf(UartTXbuff0, "Yaw P=%.2f I=%.5f D=%.2f \n\r",FlashDataFlash.pid_p_gain_yaw, FlashDataFlash.pid_i_gain_yaw, FlashDataFlash.pid_d_gain_yaw);
+	  HAL_UART_Transmit ( &huart1, UartTXbuff0, strlen( UartTXbuff0 ), 1 );
+
+
+
+	  sprintf(UartTXbuff0, "Pitch Max %d Max I %d \n\r",FlashDataFlash.pid_max_pitch, FlashDataFlash.pid_i_max_pitch);
+	  HAL_UART_Transmit ( &huart1, UartTXbuff0, strlen( UartTXbuff0 ), 1 );
+
+
+
+	  sprintf(UartTXbuff0, "Roll Max %d Max I %d \n\r",FlashDataFlash.pid_max_roll, FlashDataFlash.pid_i_max_roll);
+	  HAL_UART_Transmit ( &huart1, UartTXbuff0, strlen( UartTXbuff0 ), 1 );
+
+
+
+	  sprintf(UartTXbuff0, "Yaw Max %d Max I %d \n\r",FlashDataFlash.pid_max_yaw, FlashDataFlash.pid_i_max_yaw);
+	  HAL_UART_Transmit ( &huart1, UartTXbuff0, strlen( UartTXbuff0 ), 1 );
 
   }
   /* USER CODE END 3 */
@@ -766,7 +839,89 @@ static void MX_GPIO_Init(void)
 }
 
 /* USER CODE BEGIN 4 */
+//Write Data into Flash starting from given address
+void WriteFlashData(uint32_t StartAddr, struct FlashDatastruct *p)
+{
+	FLASH_EraseInitTypeDef EraseInitStruct;
 
+	uint32_t PageError;
+
+	EraseInitStruct.TypeErase   = FLASH_TYPEERASE_PAGES;
+	EraseInitStruct.PageAddress = StartAddr;
+	EraseInitStruct.NbPages     = 1;
+
+	HAL_FLASH_Unlock();
+
+	//FLASH_PageErase(0x800FC00); //doesn't handle all registers PER regiser in CR is not cleared
+
+	HAL_FLASHEx_Erase(&EraseInitStruct, &PageError);
+
+	HAL_FLASH_Program(FLASH_TYPEPROGRAM_WORD,StartAddr, p->controlData);
+	HAL_FLASH_Program(FLASH_TYPEPROGRAM_WORD,StartAddr+4, p->pid_p_gain_pitch);
+	HAL_FLASH_Program(FLASH_TYPEPROGRAM_WORD,StartAddr+8, p->pid_i_gain_pitch);
+	HAL_FLASH_Program(FLASH_TYPEPROGRAM_WORD,StartAddr+12, p->pid_d_gain_pitch);
+	HAL_FLASH_Program(FLASH_TYPEPROGRAM_WORD,StartAddr+16, p->pid_p_gain_roll);
+	HAL_FLASH_Program(FLASH_TYPEPROGRAM_WORD,StartAddr+20, p->pid_i_gain_roll);
+	HAL_FLASH_Program(FLASH_TYPEPROGRAM_WORD,StartAddr+24, p->pid_d_gain_roll);
+	HAL_FLASH_Program(FLASH_TYPEPROGRAM_WORD,StartAddr+28, p->pid_p_gain_yaw);
+	HAL_FLASH_Program(FLASH_TYPEPROGRAM_WORD,StartAddr+32, p->pid_i_gain_yaw);
+	HAL_FLASH_Program(FLASH_TYPEPROGRAM_WORD,StartAddr+36, p->pid_d_gain_yaw);
+	HAL_FLASH_Program(FLASH_TYPEPROGRAM_WORD,StartAddr+40, p->pid_max_pitch);
+	HAL_FLASH_Program(FLASH_TYPEPROGRAM_WORD,StartAddr+44, p->pid_i_max_pitch);
+	HAL_FLASH_Program(FLASH_TYPEPROGRAM_WORD,StartAddr+48, p->pid_max_roll);
+	HAL_FLASH_Program(FLASH_TYPEPROGRAM_WORD,StartAddr+52, p->pid_i_max_roll);
+	HAL_FLASH_Program(FLASH_TYPEPROGRAM_WORD,StartAddr+56, p->pid_max_yaw);
+	HAL_FLASH_Program(FLASH_TYPEPROGRAM_WORD,StartAddr+60, p->pid_i_max_yaw);
+
+	HAL_FLASH_Lock();
+}
+
+void EraseFlashData(uint32_t StartAddr)
+{
+	FLASH_EraseInitTypeDef EraseInitStruct;
+
+	uint32_t PageError;
+
+	EraseInitStruct.TypeErase   = FLASH_TYPEERASE_PAGES;
+	EraseInitStruct.PageAddress = StartAddr;
+	EraseInitStruct.NbPages     = 1;
+
+	HAL_FLASH_Unlock();
+
+	//FLASH_PageErase(0x800FC00); //doesn't handle all registers PER regiser in CR is not cleared
+
+	HAL_FLASHEx_Erase(&EraseInitStruct, &PageError);
+
+	HAL_FLASH_Lock();
+}
+
+
+//Check if Data on given address matches control word
+uint32_t CheckFlashData(uint32_t StartAddr)
+{
+	return *(( uint32_t *) (StartAddr) );
+}
+
+//Read Data from Flash
+void ReadFlashData(uint32_t StartAddr, struct FlashDatastruct *p)
+{
+	p->controlData= *(( uint32_t *) (StartAddr) );
+	p->pid_p_gain_pitch=*(( uint32_t *) (StartAddr+4) );
+	p->pid_i_gain_pitch=*(( uint32_t *) (StartAddr+8) );
+	p->pid_d_gain_pitch=*(( uint32_t *) (StartAddr+12) );
+	p->pid_p_gain_roll=*(( uint32_t *) (StartAddr+16) );
+	p->pid_i_gain_roll=*(( uint32_t *) (StartAddr+20) );
+	p->pid_d_gain_roll=*(( uint32_t *) (StartAddr+24) );
+	p->pid_p_gain_yaw=*(( uint32_t *) (StartAddr+28) );
+	p->pid_i_gain_yaw=*(( uint32_t *) (StartAddr+32) );
+	p->pid_d_gain_yaw=*(( uint32_t *) (StartAddr+36) );
+	p->pid_max_pitch=*(( uint32_t *) (StartAddr+40) );
+	p->pid_i_max_pitch=*(( uint32_t *) (StartAddr+44) );
+	p->pid_max_roll=*(( uint32_t *) (StartAddr+48) );
+	p->pid_i_max_roll=*(( uint32_t *) (StartAddr+52) );
+	p->pid_max_yaw=*(( uint32_t *) (StartAddr+56) );
+	p->pid_i_max_yaw=*(( uint32_t *) (StartAddr+60) );
+}
 /* USER CODE END 4 */
 
 /**

@@ -93,35 +93,20 @@ float pid_output_pitch=0;
 float pid_output_roll=0;
 float pid_output_yaw=0;
 
-float pid_p_gain_pitch = 5.0;   //Gain setting for the pitch P-controller.
-float pid_i_gain_pitch = 0.001;  //Gain setting for the pitch I-controller.
-float pid_d_gain_pitch = 500.0;  //Gain setting for the pitch D-controller.
-int pid_max_pitch = 400;        //Maximum output of the PID-controller (+/-)
-int pid_i_max_pitch = 100;      //Maximum output of the Integral part
 float pitch_integral=0;
 float pitch_diffErrHist=0;
-
-float pid_p_gain_roll = 5.0;   //Gain setting for the roll P-controller  1.3
-float pid_i_gain_roll = 0.001;  //Gain setting for the roll I-controller
-float pid_d_gain_roll = 500.0; //Gain setting for the roll D-controller
-int pid_max_roll = 400;        //Maximum output of the PID-controller (+/-)
-int pid_i_max_roll = 400;      //Maximum output of the Integral part
 float roll_integral=0;
 float roll_diffErrHist=0;
-
-float pid_p_gain_yaw = 4.0;    //Gain setting for the pitch P-controller.
-float pid_i_gain_yaw = 0.0;   //Gain setting for the pitch I-controller.
-float pid_d_gain_yaw = 0.0;    //Gain setting for the pitch D-controller.
-int pid_max_yaw = 400;         //Maximum output of the PID-controller (+/-)
-int pid_i_max_yaw = 100;       //Maximum output of the Integral part
 float yaw_integral=0;
 float yaw_diffErrHist=0;
 
 uint32_t togg1hist;
-uint32_t butt1hist;
-uint32_t butt2hist;
-uint32_t butt3hist;
-uint32_t butt4hist;
+uint32_t togg2hist;
+uint32_t togg3hist;
+uint32_t togg4hist;
+uint32_t togg5hist;
+uint32_t togg4hist;
+uint32_t togg6hist;
 
 /* USER CODE END PV */
 
@@ -318,11 +303,13 @@ void TIM2_IRQHandler(void)
   BattmVAVG=BattmVSUM/(BATTAVERAGETIME);
   //-------------------------------------------------------------------------
 
-  //save OLD button states
-  butt1hist=butt1;
-  butt2hist=butt2;
-  butt3hist=butt3;
-  butt4hist=butt4;
+  //save OLD toggle values
+  togg1hist=togg1;
+  togg2hist=togg2;
+  togg3hist=togg3;
+  togg4hist=togg4;
+  togg5hist=togg5;
+  togg6hist=togg6;
 
   //NRF24--------------------------------------------------------------------
   //Ping for RX data when RXflag is SET
@@ -349,13 +336,10 @@ void TIM2_IRQHandler(void)
 
   				togg1=nRF24_payloadRX[6]>>7;
   				togg2=(nRF24_payloadRX[6] & 64 )>>6;
-  				butt1=(nRF24_payloadRX[6] & 32 )>>5;
-  				butt2=(nRF24_payloadRX[6] & 16 )>>4;
-  				butt3=(nRF24_payloadRX[6] & 8 )>>3;
-  				butt4=(nRF24_payloadRX[6] & 4 )>>2;
-  				buttL=(nRF24_payloadRX[6] & 2 )>>1;
-  				buttD=(nRF24_payloadRX[6] & 1 );
-
+  				togg3=(nRF24_payloadRX[6] & 32 )>>5;
+  				togg4=(nRF24_payloadRX[6] & 16 )>>4;
+  				togg5=(nRF24_payloadRX[6] & 8 )>>3;
+  				togg6=(nRF24_payloadRX[6] & 4 )>>2;
 
   			}
   			SendBackFlag=1;
@@ -486,10 +470,10 @@ void TIM2_IRQHandler(void)
 
   //SCALE DATA
   //Input Controller Center to MAX 50 - >100  --->0-800 us
-  //ThrottleINscaled=ScaleDataFl(Ljoyupdown,50,100,MINTRHOTTLE,THROTTLESCALE);//throttle limit to 80%
+  ThrottleINscaled=ScaleDataFl(Ljoyupdown,0,100,MINTRHOTTLE,THROTTLESCALE);//throttle limit to 80%
 
   //TESTING potenciometer=throttle
-  ThrottleINscaled=ScaleDataFl(potenc1,0,100,0,1000);//direct 10-100 -->0-1000 testing
+  //ThrottleINscaled=ScaleDataFl(potenc1,0,100,0,1000);//direct 10-100 -->0-1000 testing
 
   //Pitch UP->DOWN 0-100 ->scaling
   PitchINscaled=ScaleDataFl(Djoyupdown,0,100,-MAXPITCHSCALE,+MAXPITCHSCALE);
@@ -504,33 +488,23 @@ void TIM2_IRQHandler(void)
 
   //MOTOR CONTROL
 
-
-  //PID tunning
-  //pid_p_gain_roll=potenc2*0.1;
-  //pid_d_gain_roll=potenc1*8;
-  //pid_i_gain_roll=potenc2*0.0001;
-  wfl1=pid_p_gain_roll;
-  wfl2=pid_d_gain_roll;
-  wfl3=pid_i_gain_roll;
-
   //PID
-  pid_output_pitch = pid(PitchINscaled, PitchGyroPIDin, pid_p_gain_pitch, pid_i_gain_pitch, pid_d_gain_pitch,&pitch_integral, &pitch_diffErrHist, pid_i_max_pitch, pid_max_pitch);
-  pid_output_roll = pid(RollINscaled, RollGyroPIDin, pid_p_gain_roll, pid_i_gain_roll, pid_d_gain_roll,&roll_integral,&roll_diffErrHist,pid_i_max_roll, pid_max_roll );
-  //pid_output_yaw = pid(YawINscaled, YawGyroPIDin, pid_p_gain_yaw, pid_i_gain_yaw, pid_d_gain_yaw, &yaw_integral,&yaw_diffErrHist,pid_i_max_roll, pid_max_yaw );
+  pid_output_pitch = pid(PitchINscaled, PitchGyroPIDin, FlashDataActive.pid_p_gain_pitch, FlashDataActive.pid_i_gain_pitch, FlashDataActive.pid_d_gain_pitch, &pitch_integral, &pitch_diffErrHist, FlashDataActive.pid_i_max_pitch, FlashDataActive.pid_max_pitch);
+  pid_output_roll = pid(RollINscaled, RollGyroPIDin, FlashDataActive.pid_p_gain_roll, FlashDataActive.pid_i_gain_roll, FlashDataActive.pid_d_gain_roll,&roll_integral,&roll_diffErrHist,FlashDataActive.pid_i_max_roll, FlashDataActive.pid_max_roll );
+  pid_output_yaw = pid(YawINscaled, YawGyroPIDin, FlashDataActive.pid_p_gain_yaw, FlashDataActive.pid_i_gain_yaw, FlashDataActive.pid_d_gain_yaw, &yaw_integral,&yaw_diffErrHist,FlashDataActive.pid_i_max_roll, FlashDataActive.pid_max_yaw );
 
   //TESTING
   if(ConnectWeakFlag==1)MotorStatus=MOTOROFF;//if connection is lost!
 
   //Motor STATUS (TOGGLE 1)
   //ON toggle 0->1 front start motor ON sequence
-  if(togg1hist!=togg1 && togg1==1)MotorStatus=MOTORSTARTING;
-  togg1hist=togg1;
+  if(togg1hist!=togg1 && togg1==1 && ThrottleINscaled<MOTORSTARTBLOCKTHRESHOLD)MotorStatus=MOTORSTARTING;
 
   //ON toggle 0-> motor always OFF
   if(togg1==0)MotorStatus=MOTOROFF;
 
   //GYROCALIB-----------------------------------------------------------------------------------------
-  if(butt3hist==0 && butt3==1 && GyroCalibStatus==0 && MotorStatus==MOTOROFF) //button 2 pressed Motor OFF Calib not in progress
+  if(togg2hist==0 && togg2==1 && GyroCalibStatus==0 && MotorStatus==MOTOROFF) //button 2 pressed Motor OFF Calib not in progress
   {
 	  GyroCalibStatus=1;
 	  SUMGyroX=0;

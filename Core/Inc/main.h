@@ -78,6 +78,10 @@ extern "C" {
 #define MAXYAWSCALE		  (float)(180)  //180degrees
 #define THROTTLESCALE	  (float)(800)  //800counts of 1000 (80%)
 #define MINTRHOTTLE		  80           //200count out of 1000 to keep rotors spinning
+#define MOTORSTARTBLOCKTHRESHOLD	200 //max throttle stick position to allow start
+
+#define FLASHCONSTADDR 0x800FC00
+#define CONTROLWORD 7 //control word to check if Flash constants are present
 
 /* USER CODE END EM */
 
@@ -88,8 +92,32 @@ void Error_Handler(void);
 
 /* USER CODE BEGIN EFP */
 
+struct FlashDatastruct
+{
+	uint32_t controlData;
+	float pid_p_gain_pitch;  //Gain setting for the pitch P-controller
+	float pid_i_gain_pitch;  //Gain setting for the pitch I-controller
+	float pid_d_gain_pitch;  //Gain setting for the pitch D-controller
+	float pid_p_gain_roll;   //Gain setting for the roll P-controller
+	float pid_i_gain_roll;   //Gain setting for the roll I-controller
+	float pid_d_gain_roll;   //Gain setting for the roll D-controller
+	float pid_p_gain_yaw;    //Gain setting for the pitch P-controller
+	float pid_i_gain_yaw;    //Gain setting for the pitch I-controller
+	float pid_d_gain_yaw;    //Gain setting for the pitch D-controller
+	int pid_max_pitch; 		 //Maximum output of the PID-controller (+/-)
+	int pid_i_max_pitch; 	 //Maximum output of the Integral part
+	int pid_max_roll;        //Maximum output of the PID-controller (+/-)
+	int pid_i_max_roll;      //Maximum output of the Integral part
+	int pid_max_yaw;         //Maximum output of the PID-controller (+/-)
+	int pid_i_max_yaw;       //Maximum output of the Integral part
+};
+
+void WriteFlashData(uint32_t flashstartaddr, struct FlashDatastruct *p);
+void ReadFlashData(uint32_t flashstartaddr, struct FlashDatastruct *p);
+void EraseFlashData(uint32_t StartAddr);
+uint32_t CheckFlashData(uint32_t StartAddr);
+
 extern uint32_t watch1,watch2,watch3,watch4,watch5,test1,test2,test3,test5;
-extern float wfl1,wfl2,wfl3,wfl4;
 extern uint16_t AdcDataArray[1];
 extern uint32_t MotorStatus;
 extern uint32_t GyroCalibStatus;
@@ -111,12 +139,10 @@ extern uint32_t potenc1;
 extern uint32_t potenc2;
 extern uint32_t togg1;
 extern uint32_t togg2;
-extern uint32_t butt1;
-extern uint32_t butt2;
-extern uint32_t butt3;
-extern uint32_t butt4;
-extern uint32_t buttL;
-extern uint32_t buttD;
+extern uint32_t togg3;
+extern uint32_t togg4;
+extern uint32_t togg5;
+extern uint32_t togg6;
 
 //MPU 6050
 extern int16_t GyroXcal,GyroYcal,GyroZcal;
@@ -141,6 +167,8 @@ extern float pid_output_pitch;
 extern float pid_output_roll;
 extern float pid_output_yaw;
 
+//Flash structure
+extern struct FlashDatastruct FlashDataActive;
 /* USER CODE END EFP */
 
 /* Private defines -----------------------------------------------------------*/
