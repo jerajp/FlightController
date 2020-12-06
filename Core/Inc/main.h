@@ -56,6 +56,11 @@ extern "C" {
 #define MOTORSTARTING 	2
 #define MOTORRUNNING	3
 
+//WIfi message type selector
+#define CONTROLMOVEMENT 0
+#define COMMERASEFLASH  1
+#define COMWRITEFLASH	2
+#define COMINPUTPARAM1	3
 
 #define VDIVRESISTOR1	6800 //Battery voltage dividers
 #define VDIVRESISTOR2 	1475
@@ -72,16 +77,13 @@ extern "C" {
 #define ACCELROLLMANUALOFFSET (float)(2.2)		//spirit level offset in degrees
 #define GYROCALIBVALUES 1000
 
-//MAX VALUES SCALING
-#define MAXPITCHSCALE 	  (float)(20)   //degrees
-#define MAXROLLSCALE 	  (float)(20)   //degrees
-#define MAXYAWSCALE		  (float)(180)  //180degrees
-#define THROTTLESCALE	  (float)(800)  //800counts of 1000 (80%)
-#define MINTRHOTTLE		  80           //200count out of 1000 to keep rotors spinning
-#define MOTORSTARTBLOCKTHRESHOLD	200 //max throttle stick position to allow start
+//SAFETY THROTTLE CHECK AT STARTUP
+#define MOTORSTARTBLOCKTHRESHOLD	200  //max throttle stick position to allow start
 
+//FLASH DATA SPECIFIC
 #define FLASHCONSTADDR 0x800FC00
 #define CONTROLWORD 7 //control word to check if Flash constants are present
+#define FLASHCONSTANTMULTIPLIER 100000
 
 /* USER CODE END EM */
 
@@ -110,12 +112,20 @@ struct FlashDatastruct
 	int pid_i_max_roll;      //Maximum output of the Integral part
 	int pid_max_yaw;         //Maximum output of the PID-controller (+/-)
 	int pid_i_max_yaw;       //Maximum output of the Integral part
+	float maxpitchdegree;    //degrees
+	float maxrolldegree;     //degrees
+	float maxyawdegree;      //degrees
+	float minthrottle;       //80counts of 1000 to keep rotors spinning
+	float maxthrottle;       //800counts of 1000 (80%)
 };
 
 void WriteFlashData(uint32_t flashstartaddr, struct FlashDatastruct *p);
 void ReadFlashData(uint32_t flashstartaddr, struct FlashDatastruct *p);
 void EraseFlashData(uint32_t StartAddr);
 uint32_t CheckFlashData(uint32_t StartAddr);
+
+void WriteString(char string[]);
+void PrintCharUart (int ch);
 
 extern uint32_t watch1,watch2,watch3,watch4,watch5,test1,test2,test3,test5;
 extern uint16_t AdcDataArray[1];

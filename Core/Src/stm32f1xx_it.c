@@ -68,7 +68,8 @@ uint32_t MSGprerSecond;
 uint32_t MSGcount;
 uint32_t ConnectWeakFlag;
 uint32_t MSGLowCount;
-uint8_t TESTERFUCKING=0;
+uint32_t MSGSelector;
+
 
 uint32_t Gyrocalibcount=0;
 uint8_t AnglePitchDIR,AngleRollDIR;		//+- direction of angles for NRF24 sending
@@ -324,24 +325,46 @@ void TIM2_IRQHandler(void)
   			// Clear all pending IRQ flags
   			nRF24_ClearIRQFlags();
 
-  			//Check if Data is in correct ranges
-  			if(nRF24_payloadRX[0]<=100 && nRF24_payloadRX[1]<=100 && nRF24_payloadRX[2]<=100 && nRF24_payloadRX[3]<=100)
+  			MSGSelector=(nRF24_payloadRX[0]);
+
+  			switch(MSGSelector)
   			{
-  				Ljoyupdown=nRF24_payloadRX[0];
-  				Ljoyleftright=nRF24_payloadRX[1];
-  				Djoyupdown=nRF24_payloadRX[2];
-  				Djoyleftright=nRF24_payloadRX[3];
-  				potenc1=nRF24_payloadRX[4];
-  				potenc2=nRF24_payloadRX[5];
+  				case CONTROLMOVEMENT:
+  									{
+  										if(nRF24_payloadRX[1]<=100 && nRF24_payloadRX[2]<=100 && nRF24_payloadRX[3]<=100 && nRF24_payloadRX[4]<=100)//Check if Data is in correct ranges
+  										{
+  							  				Ljoyupdown=nRF24_payloadRX[1];
+  							  				Ljoyleftright=nRF24_payloadRX[2];
+  							  				Djoyupdown=nRF24_payloadRX[3];
+  							  				Djoyleftright=nRF24_payloadRX[4];
+  							  				potenc1=nRF24_payloadRX[5];
+  							  				potenc2=nRF24_payloadRX[6];
 
-  				togg1=nRF24_payloadRX[6]>>7;
-  				togg2=(nRF24_payloadRX[6] & 64 )>>6;
-  				togg3=(nRF24_payloadRX[6] & 32 )>>5;
-  				togg4=(nRF24_payloadRX[6] & 16 )>>4;
-  				togg5=(nRF24_payloadRX[6] & 8 )>>3;
-  				togg6=(nRF24_payloadRX[6] & 4 )>>2;
+  							  				togg1=nRF24_payloadRX[7]>>7;
+  							  				togg2=(nRF24_payloadRX[7] & 64 )>>6;
+  							  				togg3=(nRF24_payloadRX[7] & 32 )>>5;
+  							  				togg4=(nRF24_payloadRX[7] & 16 )>>4;
+  							  				togg5=(nRF24_payloadRX[7] & 8 )>>3;
+  							  				togg6=(nRF24_payloadRX[7] & 4 )>>2;
+  										}
+  									}break;
 
+  				case COMMERASEFLASH:
+  									{
+
+  									}break;
+
+  				case COMWRITEFLASH:
+  									{
+
+  									}break;
+
+  				case COMINPUTPARAM1:
+  				  					{
+
+  				  					}break;
   			}
+
   			SendBackFlag=1;
   			RXactiveFlag=0;
 
@@ -364,40 +387,46 @@ void TIM2_IRQHandler(void)
   	 	 case 4:
   	 	 	 	 {
   	 	 			//SEND DATA TO RC remote
-  	 	 			nRF24_payloadTX[0] = (uint8_t)(BattmVAVG & 0xFF);
-  	 	 			nRF24_payloadTX[1] = (uint8_t)((BattmVAVG & 0xFF00)>>8);
+  	 	 	 		 nRF24_payloadTX[0] = MSGSelector;
 
+  	 	 	 		switch(MSGSelector)
+  	 	 	 		{
+  	 	 	 			case CONTROLMOVEMENT:
+  	 	 	 								{
+  	 	 	 									nRF24_payloadTX[1] = (uint8_t)(BattmVAVG & 0xFF);
+  	 	 	 									nRF24_payloadTX[2] = (uint8_t)((BattmVAVG & 0xFF00)>>8);
 
-  	 	 			//save Angle for NRF24 transfer
-  	 	 			if(AnglePitch<0)
-  	 	 			{
-  	 	 				AnglePitchDIR=1;
-  	 	 				AnglePitchNRF24=AnglePitch*(-1);
-  	 	 			}
-  	 	 			else
-  	 	 			{
-  	 	 				AnglePitchDIR=0;
-  	 	 				AnglePitchNRF24=AnglePitch;
-  	 	 			}
+  	 	 	 								  	//save Angle for NRF24 transfer
+  	 	 	 								  	if(AnglePitch<0)
+  	 	 	 								  	{
+  	 	 	 								  		AnglePitchDIR=1;
+  	 	 	 								  	 	AnglePitchNRF24=AnglePitch*(-1);
+  	 	 	 								  	}
+  	 	 	 								  	else
+  	 	 	 								  	{
+  	 	 	 								  		AnglePitchDIR=0;
+  	 	 	 								  	 	AnglePitchNRF24=AnglePitch;
+  	 	 	 								  	}
 
+  	 	 	 								  	if(AngleRoll<0)
+  	 	 	 								  	{
+  	 	 	 								  		AngleRollDIR=1;
+  	 	 	 								  		AngleRollNRF24=AngleRoll*(-1);
+  	 	 	 								  	}
+  	 	 	 								  	else
+  	 	 	 								  	{
+  	 	 	 								  		AngleRollDIR=0;
+  	 	 	 								  		AngleRollNRF24=AngleRoll;
+  	 	 	 								  	}
 
-  	 	 			if(AngleRoll<0)
-  	 	 			{
-  	 	 				AngleRollDIR=1;
-  	 	 				AngleRollNRF24=AngleRoll*(-1);
-  	 	 			}
-  	 	 			else
-  	 	 			{
-  	 	 				AngleRollDIR=0;
-  	 	 				AngleRollNRF24=AngleRoll;
-  	 	 			}
-
-  	 	 			nRF24_payloadTX[2] = (uint8_t)(AnglePitchNRF24);
-  	 	 			nRF24_payloadTX[3] = (uint8_t)(AngleRollNRF24);
-  	 	 			nRF24_payloadTX[4] = (uint8_t)(AnglePitchDIR + (AngleRollDIR<<1) + (GyroCalibStatus<<2) + ((MotorStatus & 0x7)<<3) ); //1bit Pitch DIR, 1bit Roll DIR, 1 bit GyroCalinFlag, 3 bit MotorStatus
+  	 	 	 								  	nRF24_payloadTX[3] = (uint8_t)(AnglePitchNRF24);
+  	 	 	 								  	nRF24_payloadTX[4] = (uint8_t)(AngleRollNRF24);
+  	 	 	 								  	nRF24_payloadTX[5] = (uint8_t)(AnglePitchDIR + (AngleRollDIR<<1) + (GyroCalibStatus<<2) + ((MotorStatus & 0x7)<<3) ); //1bit Pitch DIR, 1bit Roll DIR, 1 bit GyroCalinFlag, 3 bit MotorStatus
+  	 	 	 								}break;
+  	 	 	 		}
 
   	 	 			// Transmit a packet
-  	 	 			nRF24_TransmitPacket(nRF24_payloadTX, 5);
+  	 	 			nRF24_TransmitPacket(nRF24_payloadTX, 6);
   	 	 	 	 }break;
 
       	case 5:
@@ -465,26 +494,23 @@ void TIM2_IRQHandler(void)
   //PID input Filtered
   PitchGyroPIDin =  (PitchGyroPIDin * 0.7) + (AnglePitch * 0.3);
   RollGyroPIDin = (RollGyroPIDin * 0.7) + (AngleRoll * 0.3);
-  //YawGyroPIDin = (YawGyroPIDin * 0.7) + (GyroZcal * GYROFACTORANGLEDEG * 0.3);
+  YawGyroPIDin = (YawGyroPIDin * 0.7) + (GyroZcal * GYROFACTORANGLEDEG * 0.3);
   //-------------------------------------------------------------------
 
   //SCALE DATA
-  //Input Controller Center to MAX 50 - >100  --->0-800 us
-  ThrottleINscaled=ScaleDataFl(Ljoyupdown,0,100,MINTRHOTTLE,THROTTLESCALE);//throttle limit to 80%
-
-  //TESTING potenciometer=throttle
-  //ThrottleINscaled=ScaleDataFl(potenc1,0,100,0,1000);//direct 10-100 -->0-1000 testing
+  //Throttle UP->DOWN 0-100 ->scaling
+  ThrottleINscaled=ScaleDataFl(Ljoyupdown,0,100,FlashDataActive.minthrottle,FlashDataActive.maxthrottle);
 
   //Pitch UP->DOWN 0-100 ->scaling
-  PitchINscaled=ScaleDataFl(Djoyupdown,0,100,-MAXPITCHSCALE,+MAXPITCHSCALE);
+  PitchINscaled=ScaleDataFl(Djoyupdown,0,100,-FlashDataActive.maxpitchdegree,FlashDataActive.maxpitchdegree);
   //Invert
   PitchINscaled*=(-1);
 
   //Roll LEFT->RIGHT 0 -> 100 -> scaling
-  RollINscaled=ScaleDataFl(Djoyleftright,0,100,-MAXROLLSCALE,MAXROLLSCALE);
+  RollINscaled=ScaleDataFl(Djoyleftright,0,100,-FlashDataActive.maxrolldegree,FlashDataActive.maxrolldegree);
 
   //Roll LEFT->RIGHT 0 -> 100 ->scaling
-  YawINscaled=ScaleDataFl(Ljoyleftright,0,100,-MAXYAWSCALE,MAXYAWSCALE);
+  YawINscaled=ScaleDataFl(Ljoyleftright,0,100,-FlashDataActive.maxyawdegree,FlashDataActive.maxyawdegree);
 
   //MOTOR CONTROL
 
@@ -552,16 +578,16 @@ void TIM2_IRQHandler(void)
   {
   	  case MOTORRUNNING:
   	  	  	  {
-  	  	  		  PWM_Mot1=1000 + ThrottleINscaled  - pid_output_pitch - pid_output_roll /*+ pid_output_yaw*/;
-  	  		  	  PWM_Mot2=1000 + ThrottleINscaled  - pid_output_pitch + pid_output_roll /*- pid_output_yaw*/;
-  	  		  	  PWM_Mot3=1000 + ThrottleINscaled  + pid_output_pitch + pid_output_roll /*+ pid_output_yaw*/;
-  	  		  	  PWM_Mot4=1000 + ThrottleINscaled  + pid_output_pitch - pid_output_roll /*- pid_output_yaw*/;
+  	  	  		  PWM_Mot1=1000 + ThrottleINscaled  - pid_output_pitch - pid_output_roll + pid_output_yaw;
+  	  		  	  PWM_Mot2=1000 + ThrottleINscaled  - pid_output_pitch + pid_output_roll - pid_output_yaw;
+  	  		  	  PWM_Mot3=1000 + ThrottleINscaled  + pid_output_pitch + pid_output_roll + pid_output_yaw;
+  	  		  	  PWM_Mot4=1000 + ThrottleINscaled  + pid_output_pitch - pid_output_roll - pid_output_yaw;
 
   	  		  	  //MIN OBRATI
-  	  		  	  if(PWM_Mot1 < (1000+ MINTRHOTTLE))PWM_Mot1=(1000+ MINTRHOTTLE);
-				  if(PWM_Mot2 < (1000+ MINTRHOTTLE))PWM_Mot2=(1000+ MINTRHOTTLE);
-				  if(PWM_Mot3 < (1000+ MINTRHOTTLE))PWM_Mot3=(1000+ MINTRHOTTLE);
-				  if(PWM_Mot4 < (1000+ MINTRHOTTLE))PWM_Mot4=(1000+ MINTRHOTTLE);
+  	  		  	  if(PWM_Mot1 < (1000+ FlashDataActive.minthrottle))PWM_Mot1=(1000+ FlashDataActive.minthrottle);
+				  if(PWM_Mot2 < (1000+ FlashDataActive.minthrottle))PWM_Mot2=(1000+ FlashDataActive.minthrottle);
+				  if(PWM_Mot3 < (1000+ FlashDataActive.minthrottle))PWM_Mot3=(1000+ FlashDataActive.minthrottle);
+				  if(PWM_Mot4 < (1000+ FlashDataActive.minthrottle))PWM_Mot4=(1000+ FlashDataActive.minthrottle);
 
 			  	  //MAX OBRATI
 	  	  		  if(PWM_Mot1 > 1950)PWM_Mot1=1950;
