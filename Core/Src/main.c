@@ -307,7 +307,13 @@ int main(void)
 	  //own function is used for UART TX, very basic function for direct Register write one char at the time
 	  //HAL_UART_Transmit ( &huart1, UartTXbuff0, strlen( UartTXbuff0 ), 1 ); //removed ->missing bytes on occasion
 
-	  HAL_Delay(50);
+	  HAL_Delay(100);
+
+	  sprintf(UartTXbuff0,T_HIDE_CUR);
+	  WriteString(UartTXbuff0);
+
+	  sprintf(UartTXbuff0,T_GO_TO,1,1); //Go to start Screen
+	  WriteString(UartTXbuff0);
 
 	  sprintf(UartTXbuff0,T_CLR_SCREEN);
 	  WriteString(UartTXbuff0);
@@ -339,16 +345,7 @@ int main(void)
 	  sprintf(UartTXbuff0, "\n\r" );
 	  WriteString(UartTXbuff0);
 
-	  sprintf(UartTXbuff0, "PWM Mot1=%u \n\r",PWM_Mot1);
-	  WriteString(UartTXbuff0);
-
-	  sprintf(UartTXbuff0, "PWM Mot2=%u \n\r",PWM_Mot2);
-	  WriteString(UartTXbuff0);
-
-	  sprintf(UartTXbuff0, "PWM Mot3=%u \n\r",PWM_Mot3);
-	  WriteString(UartTXbuff0);
-
-	  sprintf(UartTXbuff0, "PWM Mot4=%u \n\r",PWM_Mot4);
+	  sprintf(UartTXbuff0, "PWM 1:%u  2:%u  3:%u  4:%u   \n\r",PWM_Mot1,PWM_Mot2,PWM_Mot3,PWM_Mot4);
 	  WriteString(UartTXbuff0);
 
 	  sprintf(UartTXbuff0, "\n\rINPUTS \n\r" );
@@ -385,6 +382,18 @@ int main(void)
 	  sprintf(UartTXbuff0, "Yaw Max %d Max I %d \n\r",FlashDataActive.pid_max_yaw, FlashDataActive.pid_i_max_yaw);
 	  WriteString(UartTXbuff0);
 
+	  sprintf(UartTXbuff0, "Pitch Max Degree %.2f \n\r",FlashDataActive.maxpitchdegree);
+	  WriteString(UartTXbuff0);
+
+	  sprintf(UartTXbuff0, "Roll Max Degree %.2f \n\r",FlashDataActive.maxrolldegree);
+	  WriteString(UartTXbuff0);
+
+	  sprintf(UartTXbuff0, "Yaw Max Degree %.2f \n\r",FlashDataActive.maxyawdegree);
+	  WriteString(UartTXbuff0);
+
+	  sprintf(UartTXbuff0, "Throttle Max %.2f Min I %.2f \n\r",FlashDataActive.maxthrottle, FlashDataActive.minthrottle);
+	  WriteString(UartTXbuff0);
+
 
 	  //FLASH PID CONSTANTS
 	  sprintf(UartTXbuff0, "\n\rPID Constants Flash  \n\r" );
@@ -406,6 +415,24 @@ int main(void)
 	  WriteString(UartTXbuff0);
 
 	  sprintf(UartTXbuff0, "Yaw Max %d Max I %d \n\r",FlashDataFlash.pid_max_yaw, FlashDataFlash.pid_i_max_yaw);
+	  WriteString(UartTXbuff0);
+
+	  sprintf(UartTXbuff0, "Pitch Max Degree %.2f \n\r",FlashDataFlash.maxpitchdegree);
+	  WriteString(UartTXbuff0);
+
+	  sprintf(UartTXbuff0, "Roll Max Degree %.2f \n\r",FlashDataFlash.maxrolldegree);
+	  WriteString(UartTXbuff0);
+
+	  sprintf(UartTXbuff0, "Yaw Max Degree %.2f \n\r",FlashDataFlash.maxyawdegree);
+	  WriteString(UartTXbuff0);
+
+	  sprintf(UartTXbuff0, "Throttle Max %.2f Min I %.2f \n\r",FlashDataFlash.maxthrottle, FlashDataFlash.minthrottle);
+	  WriteString(UartTXbuff0);
+
+	  sprintf(UartTXbuff0, "\n\r" );
+	  WriteString(UartTXbuff0);
+
+	  sprintf(UartTXbuff0, "watch %d %d %d %d\n\r",watch1,watch2,watch3,watch4);
 	  WriteString(UartTXbuff0);
 
 

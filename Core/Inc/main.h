@@ -57,17 +57,23 @@ extern "C" {
 #define MOTORRUNNING	3
 
 //WIfi message type selector
-#define CONTROLMOVEMENT 0
-#define COMMERASEFLASH  1
-#define COMWRITEFLASH	2
-#define COMINPUTPARAM1	3
+#define COMMCONTROLDATA 	0  //normal control data
+#define COMMPARAMACTIVE		1  //Param Send to Drone ->MSG saves in Active Structure - And Drone Returns Value
+#define COMMPARAMFLASH  	2  //Get Parameter from Drone Flash
+#define COMMERASEFLASHDR	3
+#define COMMWRITEFLASHDR	4
+#define FLASHOPERATIONTIMEOUT 2000
 
 #define VDIVRESISTOR1	6800 //Battery voltage dividers
 #define VDIVRESISTOR2 	1475
 #define BATTADCTOMV	(float)( (float)((VDIVRESISTOR1 + VDIVRESISTOR2) * 3300) / (float)((VDIVRESISTOR2 * 4095)) )
 #define BATTAVERAGETIME 50 //50 msec average
 #define  MINMSGPERSEC   10
-#define T_CLR_SCREEN 		"\x1b[2J"
+
+#define T_CLR_SCREEN 	"\x1b[2J"
+#define T_GO_TO			"\x1b[%d;%dH"
+#define T_SHOW_CUR      "\33[?25h"
+#define T_HIDE_CUR      "\33[?25l"
 
 #define GYROFACTORANGLE (float)( (1) / (65.5 * 500) )  // [deg]   units 2ms loop 500 readings per second
 #define GYROFACTORANGLEDEG (float)( 1 / 65.5 )  	   // [deg/s] units 65.5 factor-from gyro set-up
@@ -84,6 +90,27 @@ extern "C" {
 #define FLASHCONSTADDR 0x800FC00
 #define CONTROLWORD 7 //control word to check if Flash constants are present
 #define FLASHCONSTANTMULTIPLIER 100000
+
+#define PARAM1 1
+#define PARAM2 2
+#define PARAM3 3
+#define PARAM4 4
+#define PARAM5 5
+#define PARAM6 6
+#define PARAM7 7
+#define PARAM8 8
+#define PARAM9 9
+#define PARAM10 10
+#define PARAM11 11
+#define PARAM12 12
+#define PARAM13 13
+#define PARAM14 14
+#define PARAM15 15
+#define PARAM16 16
+#define PARAM17 17
+#define PARAM18 18
+#define PARAM19 19
+#define PARAM20 20
 
 /* USER CODE END EM */
 
@@ -179,6 +206,7 @@ extern float pid_output_yaw;
 
 //Flash structure
 extern struct FlashDatastruct FlashDataActive;
+extern struct FlashDatastruct FlashDataFlash;
 /* USER CODE END EFP */
 
 /* Private defines -----------------------------------------------------------*/

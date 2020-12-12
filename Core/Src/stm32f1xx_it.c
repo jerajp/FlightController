@@ -68,8 +68,18 @@ uint32_t MSGprerSecond;
 uint32_t MSGcount;
 uint32_t ConnectWeakFlag;
 uint32_t MSGLowCount;
-uint32_t MSGSelector;
 
+uint32_t FlashEraseFlag;
+uint32_t FlashWriteFlag;
+uint32_t MSGSelector;
+uint32_t ParamSelector;
+uint32_t SendParamActiveFlag;
+uint32_t SendParamFlashFlag;
+uint32_t ParamDataTX;
+uint32_t ParamDataRX;
+struct FlashDatastruct FlashDataTemp;
+uint32_t FlashWriteTimeoutCount;
+uint32_t FlashEraseTimeoutCount;
 
 uint32_t Gyrocalibcount=0;
 uint8_t AnglePitchDIR,AngleRollDIR;		//+- direction of angles for NRF24 sending
@@ -329,7 +339,7 @@ void TIM2_IRQHandler(void)
 
   			switch(MSGSelector)
   			{
-  				case CONTROLMOVEMENT:
+  				case COMMCONTROLDATA:
   									{
   										if(nRF24_payloadRX[1]<=100 && nRF24_payloadRX[2]<=100 && nRF24_payloadRX[3]<=100 && nRF24_payloadRX[4]<=100)//Check if Data is in correct ranges
   										{
@@ -349,21 +359,63 @@ void TIM2_IRQHandler(void)
   										}
   									}break;
 
-  				case COMMERASEFLASH:
+  				case COMMERASEFLASHDR:
   									{
+  										FlashEraseFlag=1;
 
   									}break;
 
-  				case COMWRITEFLASH:
+  				case COMMWRITEFLASHDR:
   									{
+  										FlashWriteFlag=1;
 
   									}break;
 
-  				case COMINPUTPARAM1:
+  				case COMMPARAMACTIVE:
   				  					{
+  				  						ParamSelector=nRF24_payloadRX[1];
+  				  						ParamDataRX=(nRF24_payloadRX[2]<<24) + (nRF24_payloadRX[3]<<16) + (nRF24_payloadRX[4]<<8) + (nRF24_payloadRX[5]);
 
   				  					}break;
+
+  				case COMMPARAMFLASH:
+  				  					{
+  				  						ParamSelector=nRF24_payloadRX[1];
+
+  				  					}break;
+
+
   			}
+
+
+  			if(MSGSelector==COMMPARAMACTIVE)//save values in active structure
+  			{
+  				switch(ParamSelector)
+  				{
+					case  PARAM1 :{FlashDataActive.pid_p_gain_pitch=(float)(ParamDataRX)/(float)(FLASHCONSTANTMULTIPLIER);}break;
+					case  PARAM2 :{FlashDataActive.pid_i_gain_pitch=(float)(ParamDataRX)/(float)(FLASHCONSTANTMULTIPLIER);}break;
+					case  PARAM3 :{FlashDataActive.pid_d_gain_pitch=(float)(ParamDataRX)/(float)(FLASHCONSTANTMULTIPLIER);}break;
+					case  PARAM4 :{FlashDataActive.pid_p_gain_roll=(float)(ParamDataRX)/(float)(FLASHCONSTANTMULTIPLIER);}break;
+					case  PARAM5 :{FlashDataActive.pid_i_gain_roll=(float)(ParamDataRX)/(float)(FLASHCONSTANTMULTIPLIER);}break;
+					case  PARAM6 :{FlashDataActive.pid_d_gain_roll=(float)(ParamDataRX)/(float)(FLASHCONSTANTMULTIPLIER);}break;
+					case  PARAM7 :{FlashDataActive.pid_p_gain_yaw=(float)(ParamDataRX)/(float)(FLASHCONSTANTMULTIPLIER);}break;
+					case  PARAM8 :{FlashDataActive.pid_i_gain_yaw=(float)(ParamDataRX)/(float)(FLASHCONSTANTMULTIPLIER);}break;
+					case  PARAM9 :{FlashDataActive.pid_d_gain_yaw=(float)(ParamDataRX)/(float)(FLASHCONSTANTMULTIPLIER);}break;
+					case  PARAM10 :{FlashDataActive.pid_max_pitch=(int)(ParamDataRX/FLASHCONSTANTMULTIPLIER);}break;
+					case  PARAM11 :{FlashDataActive.pid_i_max_pitch=(int)(ParamDataRX/FLASHCONSTANTMULTIPLIER);}break;
+					case  PARAM12 :{FlashDataActive.pid_max_roll=(int)(ParamDataRX/FLASHCONSTANTMULTIPLIER);}break;
+					case  PARAM13 :{FlashDataActive.pid_i_max_roll=(int)(ParamDataRX/FLASHCONSTANTMULTIPLIER);}break;
+					case  PARAM14 :{FlashDataActive.pid_max_yaw=(int)(ParamDataRX/FLASHCONSTANTMULTIPLIER);}break;
+					case  PARAM15 :{FlashDataActive.pid_i_max_yaw=(int)(ParamDataRX/FLASHCONSTANTMULTIPLIER);}break;
+					case  PARAM16 :{FlashDataActive.maxpitchdegree=(float)(ParamDataRX)/(float)(FLASHCONSTANTMULTIPLIER);}break;
+					case  PARAM17 :{FlashDataActive.maxrolldegree=(float)(ParamDataRX)/(float)(FLASHCONSTANTMULTIPLIER);}break;
+					case  PARAM18 :{FlashDataActive.maxyawdegree=(float)(ParamDataRX)/(float)(FLASHCONSTANTMULTIPLIER);}break;
+					case  PARAM19 :{FlashDataActive.minthrottle=(float)(ParamDataRX)/(float)(FLASHCONSTANTMULTIPLIER);}break;
+					case  PARAM20 :{FlashDataActive.maxthrottle=(float)(ParamDataRX)/(float)(FLASHCONSTANTMULTIPLIER);}break;
+  				}
+  			}
+
+
 
   			SendBackFlag=1;
   			RXactiveFlag=0;
@@ -374,6 +426,37 @@ void TIM2_IRQHandler(void)
   if(SendBackFlag)//Config between RX-TX
   {
     	BackTimer++;
+
+    	//Calculate param for transfer
+    	 if(MSGSelector==COMMPARAMACTIVE || MSGSelector==COMMPARAMFLASH)
+    	 {
+    		 if(MSGSelector==COMMPARAMACTIVE)FlashDataTemp=FlashDataActive;
+    		 else FlashDataTemp=FlashDataFlash;
+
+    		 switch(ParamSelector)
+    		 {
+    	 	 	 case PARAM1: {ParamDataTX=FlashDataTemp.pid_p_gain_pitch*FLASHCONSTANTMULTIPLIER;}break;
+    	 	 	 case PARAM2: {ParamDataTX=FlashDataTemp.pid_i_gain_pitch*FLASHCONSTANTMULTIPLIER;}break;
+    	 	 	 case PARAM3: {ParamDataTX=FlashDataTemp.pid_d_gain_pitch*FLASHCONSTANTMULTIPLIER;}break;
+    	 	 	 case PARAM4: {ParamDataTX=FlashDataTemp.pid_p_gain_roll*FLASHCONSTANTMULTIPLIER;}break;
+    	 	 	 case PARAM5: {ParamDataTX=FlashDataTemp.pid_i_gain_roll*FLASHCONSTANTMULTIPLIER;}break;
+    	 	 	 case PARAM6: {ParamDataTX=FlashDataTemp.pid_d_gain_roll*FLASHCONSTANTMULTIPLIER;}break;
+    	 	 	 case PARAM7: {ParamDataTX=FlashDataTemp.pid_p_gain_yaw*FLASHCONSTANTMULTIPLIER;}break;
+    	 	 	 case PARAM8: {ParamDataTX=FlashDataTemp.pid_i_gain_yaw*FLASHCONSTANTMULTIPLIER;}break;
+    	 	 	 case PARAM9: {ParamDataTX=FlashDataTemp.pid_d_gain_yaw*FLASHCONSTANTMULTIPLIER;}break;
+    	 	 	 case PARAM10: {ParamDataTX=FlashDataTemp.pid_max_pitch*FLASHCONSTANTMULTIPLIER;}break;
+    	 	 	 case PARAM11: {ParamDataTX=FlashDataTemp.pid_i_max_pitch*FLASHCONSTANTMULTIPLIER;}break;
+    	 	 	 case PARAM12: {ParamDataTX=FlashDataTemp.pid_max_roll*FLASHCONSTANTMULTIPLIER;}break;
+    	 	 	 case PARAM13: {ParamDataTX=FlashDataTemp.pid_i_max_roll*FLASHCONSTANTMULTIPLIER;}break;
+    	 	 	 case PARAM14: {ParamDataTX=FlashDataTemp.pid_max_yaw*FLASHCONSTANTMULTIPLIER;}break;
+    	 	 	 case PARAM15: {ParamDataTX=FlashDataTemp.pid_i_max_yaw*FLASHCONSTANTMULTIPLIER;}break;
+    	 	 	 case PARAM16: {ParamDataTX=FlashDataTemp.maxpitchdegree*FLASHCONSTANTMULTIPLIER;}break;
+    	 	 	 case PARAM17: {ParamDataTX=FlashDataTemp.maxrolldegree*FLASHCONSTANTMULTIPLIER;}break;
+    	 	 	 case PARAM18: {ParamDataTX=FlashDataTemp.maxyawdegree*FLASHCONSTANTMULTIPLIER;}break;
+    	 	 	 case PARAM19: {ParamDataTX=FlashDataTemp.minthrottle*FLASHCONSTANTMULTIPLIER;}break;
+    	 	 	 case PARAM20: {ParamDataTX=FlashDataTemp.maxthrottle*FLASHCONSTANTMULTIPLIER;}break;
+    		 }
+    	 }
 
       	switch(BackTimer)
       	{
@@ -391,7 +474,7 @@ void TIM2_IRQHandler(void)
 
   	 	 	 		switch(MSGSelector)
   	 	 	 		{
-  	 	 	 			case CONTROLMOVEMENT:
+  	 	 	 			case COMMCONTROLDATA:
   	 	 	 								{
   	 	 	 									nRF24_payloadTX[1] = (uint8_t)(BattmVAVG & 0xFF);
   	 	 	 									nRF24_payloadTX[2] = (uint8_t)((BattmVAVG & 0xFF00)>>8);
@@ -422,6 +505,43 @@ void TIM2_IRQHandler(void)
   	 	 	 								  	nRF24_payloadTX[3] = (uint8_t)(AnglePitchNRF24);
   	 	 	 								  	nRF24_payloadTX[4] = (uint8_t)(AngleRollNRF24);
   	 	 	 								  	nRF24_payloadTX[5] = (uint8_t)(AnglePitchDIR + (AngleRollDIR<<1) + (GyroCalibStatus<<2) + ((MotorStatus & 0x7)<<3) ); //1bit Pitch DIR, 1bit Roll DIR, 1 bit GyroCalinFlag, 3 bit MotorStatus
+  	 	 	 								}break;
+  	 	 	 			case COMMERASEFLASHDR:
+  	 	 	 								{
+  	 	 	 									nRF24_payloadTX[1]=0;
+  	 	 	 									nRF24_payloadTX[2]=0;
+  	 	 	 							  	 	nRF24_payloadTX[3]=0;
+  	 	 	 							  	 	nRF24_payloadTX[4]=0;
+  	 	 	 							  	 	nRF24_payloadTX[5]=0;
+  	 	 	 							  	 	FlashEraseTimeoutCount=FLASHOPERATIONTIMEOUT;//set timeout to prevent multiple calls
+  	 	 	 								}break;
+
+  	 	 	 			case COMMWRITEFLASHDR:
+  	 	 	 								{
+  	 	 	 									nRF24_payloadTX[1]=0;
+  	 	 	 						  	 	  	nRF24_payloadTX[2]=0;
+  	 	 	 						  	 	  	nRF24_payloadTX[3]=0;
+  	 	 	 						  	 	  	nRF24_payloadTX[4]=0;
+  	 	 	 						  	 	  	nRF24_payloadTX[5]=0;
+  	 	 	 						  	 	  	FlashWriteTimeoutCount=FLASHOPERATIONTIMEOUT; //set timeout to prevent multiple calls
+  	 	 	 								}break;
+
+  	 	 	 			case COMMPARAMACTIVE:
+											{
+  	 	 	 									nRF24_payloadTX[1] = ParamSelector;
+  	 	 	 									nRF24_payloadTX[2] = (ParamDataTX & 0xFF000000)>>24;
+  	 	 	 									nRF24_payloadTX[3] = (ParamDataTX & 0x00FF0000)>>16;
+  	 	 	 									nRF24_payloadTX[4] = (ParamDataTX & 0x0000FF00)>>8;
+  	 	 	 									nRF24_payloadTX[5] = (ParamDataTX & 0x000000FF);
+											}break;
+
+  	 	 	 			case COMMPARAMFLASH:
+  	 	 	 								{
+  	 	 	 									nRF24_payloadTX[1] = ParamSelector;
+  	 	 	 									nRF24_payloadTX[2] = (ParamDataTX & 0xFF000000)>>24;
+  	 	 	 									nRF24_payloadTX[3] = (ParamDataTX & 0x00FF0000)>>16;
+  	 	 	 									nRF24_payloadTX[4] = (ParamDataTX & 0x0000FF00)>>8;
+  	 	 	 									nRF24_payloadTX[5] = (ParamDataTX & 0x000000FF);
   	 	 	 								}break;
   	 	 	 		}
 
@@ -538,6 +658,28 @@ void TIM2_IRQHandler(void)
 	  SUMGyroZ=0;
 	  Gyrocalibcount=0;
   }
+
+  //Write and Erase Flash operation timeout to prevent multiple calls in sequence
+  if(FlashWriteTimeoutCount>0)FlashWriteTimeoutCount--;
+  if(FlashEraseTimeoutCount>0)FlashEraseTimeoutCount--;
+
+  //Write active parameters in flash
+  if(FlashWriteFlag && MotorStatus==MOTOROFF && FlashWriteTimeoutCount==0)
+  {
+	  WriteFlashData(FLASHCONSTADDR, &FlashDataActive);
+	  ReadFlashData(FLASHCONSTADDR, &FlashDataFlash);//Read back values to Flash structure
+	  FlashWriteFlag=0;//reset
+	  watch1++;
+  }
+
+  //Erase Flash Data
+  if(FlashEraseFlag && MotorStatus==MOTOROFF && FlashEraseTimeoutCount==0)
+  {
+	  EraseFlashData(FLASHCONSTADDR);
+	  FlashEraseFlag=0;//reset
+	  watch2++;
+  }
+
   if(GyroCalibStatus==1)
   {
 	  SUMGyroX+=mpu6050DataStr.Gyroscope_X;
