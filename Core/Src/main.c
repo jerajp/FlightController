@@ -28,6 +28,7 @@
 #include "stm32f1xx_it.h"
 #include <string.h>
 #include <stdio.h>
+#include <math.h>
 /* USER CODE END Includes */
 
 /* Private typedef -----------------------------------------------------------*/
@@ -57,7 +58,8 @@ TIM_HandleTypeDef htim2;
 UART_HandleTypeDef huart1;
 
 /* USER CODE BEGIN PV */
-uint32_t watch1,watch2,watch3,watch4,watch5,test1,test2,test3,test5;
+uint32_t watch1,watch2,watch3,watch4,watch5,watch6;
+float watch1fl,watch2fl,watch3fl,watch4fl;
 
 //NRF24
 uint8_t nRF24_payloadTX[32]; //TX buffer
@@ -87,6 +89,8 @@ int16_t GyroXcal,GyroYcal,GyroZcal;
 int16_t GyroXOff,GyroYOff,GyroZOff;
 int32_t SUMGyroX,SUMGyroY,SUMGyroZ;
 uint32_t i=0;
+uint8_t fifoBuffer[64]; // FIFO storage buffer
+uint16_t packetSize;    // expected DMP packet size (default is 42 bytes)
 
 //UART DEBUG
 char UartTXbuff0[100];
@@ -208,6 +212,10 @@ int main(void)
   MPU6050rezulatat=MPU6050_check(&hi2c2);
   MPU6050_init(&hi2c2);
 
+  //MPU6050_DMP_Init(&hi2c2);
+
+  //MPU6050_DMP_Enable(&hi2c2,MPU6050_ADDRESS,0);//enable DMP
+
   HAL_Delay(400);//for stable MPU6050 readings after init
 
   //NRF24 INIT
@@ -242,7 +250,7 @@ int main(void)
   nRF24_SetAddr(nRF24_PIPETX, nRF24_ADDR);
 
   // Set TX power
-  nRF24_SetTXPower(nRF24_TXPWR_6dBm);
+  nRF24_SetTXPower(nRF24_TXPWR_18dBm);
 
   // Set operational mode
   nRF24_SetOperationalMode(nRF24_MODE_RX);
@@ -278,9 +286,19 @@ int main(void)
 
   GyroCalibStatus=0;
 
-  //startup angles Accel to Gyro transfer
+  //startup angles Accel to Gyro transfer--------------------------------------------------------------
+  MPU6050_accread(&hi2c2,&mpu6050DataStr);
+
+  Acc_vector=sqrt((mpu6050DataStr.Accelerometer_X * mpu6050DataStr.Accelerometer_X)+(mpu6050DataStr.Accelerometer_Y * mpu6050DataStr.Accelerometer_Y)+(mpu6050DataStr.Accelerometer_Z * mpu6050DataStr.Accelerometer_Z));
+  AnglePitchAccel=asin((double)mpu6050DataStr.Accelerometer_Y/Acc_vector)*RADIANSTODEGREES;
+  AngleRollAccel=-asin((double)mpu6050DataStr.Accelerometer_X/Acc_vector)*RADIANSTODEGREES;
+
+  AnglePitchAccel-=ACCELPITCHMANUALOFFSET;
+  AngleRollAccel-=ACCELROLLMANUALOFFSET;
+
   AnglePitchGyro=AnglePitchAccel;
   AngleRollGyro=AngleRollAccel;
+  AngleYawGyro=0;
 
   HAL_TIM_PWM_Start(&htim1, TIM_CHANNEL_1);
   HAL_TIM_PWM_Start(&htim1, TIM_CHANNEL_2);
@@ -318,7 +336,7 @@ int main(void)
 	  sprintf(UartTXbuff0,T_CLR_SCREEN);
 	  WriteString(UartTXbuff0);
 
-	  sprintf(UartTXbuff0, "Motor Status %u \n\r",MotorStatus);
+	  sprintf(UartTXbuff0, "Motor Status %u MPU=%u \n\r",MotorStatus,MPU6050rezulatat);
 	  WriteString(UartTXbuff0);
 
 	  sprintf(UartTXbuff0, "ThrottleIN %.2f \n\r",ThrottleINscaled);
@@ -340,6 +358,18 @@ int main(void)
 	  WriteString(UartTXbuff0);
 
 	  sprintf(UartTXbuff0, "Roll=%.2f \n\r",AngleRoll);
+	  WriteString(UartTXbuff0);
+
+	  sprintf(UartTXbuff0, "Yaw=%.2f \n\r",AngleYaw);
+	  WriteString(UartTXbuff0);
+
+	  sprintf(UartTXbuff0, "Pitch ACC=%.2f GYRO=%.2f\n\r",AnglePitchAccel,AnglePitchGyro);
+	  WriteString(UartTXbuff0);
+
+	  sprintf(UartTXbuff0, "Roll ACC=%.2f GYRO=%.2f\n\r",AngleRollAccel,AngleRollGyro);
+	  WriteString(UartTXbuff0);
+
+	  sprintf(UartTXbuff0, "Yaw GYRO=%.2f\n\r",AngleYawGyro);
 	  WriteString(UartTXbuff0);
 
 	  sprintf(UartTXbuff0, "\n\r" );
@@ -432,9 +462,14 @@ int main(void)
 	  sprintf(UartTXbuff0, "\n\r" );
 	  WriteString(UartTXbuff0);
 
-	  sprintf(UartTXbuff0, "watch %d %d %d %d\n\r",watch1,watch2,watch3,watch4);
+	  sprintf(UartTXbuff0, "watch %d %d %d %d %d %d\n\r",watch1,watch2,watch3,watch4,watch5,watch6);
 	  WriteString(UartTXbuff0);
 
+	  sprintf(UartTXbuff0, "watch %.2f %2.f %.2f %.2f \n\r",watch1fl,watch2fl,watch3fl,watch4fl);
+	  WriteString(UartTXbuff0);
+
+	  sprintf(UartTXbuff0, "off %d %d %d %.10f\n\r",GyroXOff,GyroYOff,GyroZOff,GYROFACTORANGLE);
+	  WriteString(UartTXbuff0);
 
   }
   /* USER CODE END 3 */

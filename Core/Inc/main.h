@@ -75,12 +75,12 @@ extern "C" {
 #define T_SHOW_CUR      "\33[?25h"
 #define T_HIDE_CUR      "\33[?25l"
 
-#define GYROFACTORANGLE (float)( (1) / (65.5 * 500) )  // [deg]   units 2ms loop 500 readings per second
-#define GYROFACTORANGLEDEG (float)( 1 / 65.5 )  	   // [deg/s] units 65.5 factor-from gyro set-up
-#define DEGREESTORADIANS (float)( 0.017453292 )  //2conversion factor from degrees to radians
-#define READIANSTODEGREES (float)(57.29578)
-#define ACCELPITCHMANUALOFFSET (float)(0.2)		//spirit level offset in degrees
-#define ACCELROLLMANUALOFFSET (float)(2.2)		//spirit level offset in degrees
+#define GYROFACTORANGLE (double)( (1) / (32.8 * 500) )  // [deg]   units 2ms loop 500 readings per second
+#define GYROFACTORANGLEDEG (double)( 1 / 32.8 )  	   // [deg/s] units 65.5 factor-from gyro set-up
+#define DEGREESTORADIANS (double)( 0.017453292 )  //conversion factor from degrees to radians
+#define RADIANSTODEGREES (double)(57.29578)
+#define ACCELPITCHMANUALOFFSET (double)(0.2)		//spirit level offset in degrees
+#define ACCELROLLMANUALOFFSET (double)(0.5)		//spirit level offset in degrees
 #define GYROCALIBVALUES 1000
 
 //SAFETY THROTTLE CHECK AT STARTUP
@@ -154,7 +154,8 @@ uint32_t CheckFlashData(uint32_t StartAddr);
 void WriteString(char string[]);
 void PrintCharUart (int ch);
 
-extern uint32_t watch1,watch2,watch3,watch4,watch5,test1,test2,test3,test5;
+extern uint32_t watch1,watch2,watch3,watch4,watch5,watch6;
+extern float watch1fl,watch2fl,watch3fl,watch4fl;
 extern uint16_t AdcDataArray[1];
 extern uint32_t MotorStatus;
 extern uint32_t GyroCalibStatus;

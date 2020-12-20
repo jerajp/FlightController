@@ -84,9 +84,11 @@ uint32_t FlashEraseTimeoutCount;
 uint32_t Gyrocalibcount=0;
 uint8_t AnglePitchDIR,AngleRollDIR;		//+- direction of angles for NRF24 sending
 uint8_t AngleRollNRF24,AnglePitchNRF24; //positive angles for NRF24 sending
-float AnglePitch, AnglePitchGyro,AnglePitchAccel;
-float AngleRoll, AngleRollGyro, AngleRollAccel;
-float Acc_vector;
+double AnglePitch, AnglePitchGyro,AnglePitchAccel;
+double AngleRoll, AngleRollGyro, AngleRollAccel;
+double AngleYaw, AngleYawGyro;
+
+double Acc_vector;
 uint8_t StartupAngleSet=0;
 
 //SCALED INPUTS
@@ -118,6 +120,13 @@ uint32_t togg4hist;
 uint32_t togg5hist;
 uint32_t togg4hist;
 uint32_t togg6hist;
+
+uint16_t temp_ACC_X;
+uint16_t temp_ACC_Y;
+uint16_t temp_ACC_Z;
+uint16_t temp_GYR_X;
+uint16_t temp_GYR_Y;
+uint16_t temp_GYR_Z;
 
 /* USER CODE END PV */
 
@@ -588,33 +597,55 @@ void TIM2_IRQHandler(void)
   MPU6050_accread(&hi2c2,&mpu6050DataStr);
   MPU6050_gyroread(&hi2c2,&mpu6050DataStr);
 
+/*  if(mpu6050DataStr.Accelerometer_X < 0 )temp_ACC_X=-mpu6050DataStr.Accelerometer_X;
+  else temp_ACC_X=mpu6050DataStr.Accelerometer_X;
+  if(mpu6050DataStr.Accelerometer_Y < 0 )temp_ACC_Y=-mpu6050DataStr.Accelerometer_Y;
+  else temp_ACC_Y=mpu6050DataStr.Accelerometer_Y;
+  if(mpu6050DataStr.Accelerometer_Z < 0 )temp_ACC_Z=-mpu6050DataStr.Accelerometer_Z;
+  else temp_ACC_Z=mpu6050DataStr.Accelerometer_Z;
+  if(mpu6050DataStr.Gyroscope_X < 0 )temp_GYR_X=-mpu6050DataStr.Gyroscope_X;
+  else temp_GYR_X=mpu6050DataStr.Gyroscope_X;
+  if(mpu6050DataStr.Gyroscope_Y < 0 )temp_GYR_Y=-mpu6050DataStr.Gyroscope_Y;
+  else temp_GYR_Y=mpu6050DataStr.Gyroscope_Y;
+  if(mpu6050DataStr.Gyroscope_Z < 0 )temp_GYR_Z=-mpu6050DataStr.Gyroscope_Z;
+  else temp_GYR_Z=mpu6050DataStr.Gyroscope_Z;
+
+  if(temp_ACC_X > 16000)watch1++;
+  if(temp_ACC_Y > 16000)watch2++;
+  if(temp_ACC_Z > 16000)watch3++;
+  if(temp_GYR_X > 16000)watch4++;
+  if(temp_GYR_Y > 16000)watch5++;
+  if(temp_GYR_Z > 16000)watch6++;*/
+
   GyroXcal=mpu6050DataStr.Gyroscope_X - GyroXOff;
   GyroYcal=mpu6050DataStr.Gyroscope_Y - GyroYOff;
   GyroZcal=mpu6050DataStr.Gyroscope_Z - GyroZOff;
 
   AnglePitchGyro+=GyroXcal*GYROFACTORANGLE;
   AngleRollGyro+=GyroYcal*GYROFACTORANGLE;
+  AngleYawGyro+=GyroZcal*GYROFACTORANGLE;
 
   //correct angles with jaw axis correction
-  AnglePitchGyro+=AngleRollGyro * sin(GyroZcal * DEGREESTORADIANS * GYROFACTORANGLE);
-  AngleRollGyro-=AnglePitchGyro * sin(GyroZcal * DEGREESTORADIANS * GYROFACTORANGLE);
+  AnglePitchGyro+=AngleRollGyro * sin((double)(GyroZcal) * DEGREESTORADIANS * GYROFACTORANGLE);
+  AngleRollGyro-=AnglePitchGyro * sin((double)(GyroZcal) * DEGREESTORADIANS * GYROFACTORANGLE);
 
   //Accelerometer angles
   Acc_vector=sqrt((mpu6050DataStr.Accelerometer_X * mpu6050DataStr.Accelerometer_X)+(mpu6050DataStr.Accelerometer_Y * mpu6050DataStr.Accelerometer_Y)+(mpu6050DataStr.Accelerometer_Z * mpu6050DataStr.Accelerometer_Z));
-  AnglePitchAccel=asin((float)mpu6050DataStr.Accelerometer_Y/Acc_vector)*READIANSTODEGREES;
-  AngleRollAccel=-asin((float)mpu6050DataStr.Accelerometer_X/Acc_vector)*READIANSTODEGREES;
+  AnglePitchAccel=asin((double)mpu6050DataStr.Accelerometer_Y/Acc_vector)*RADIANSTODEGREES;
+  AngleRollAccel=-asin((double)mpu6050DataStr.Accelerometer_X/Acc_vector)*RADIANSTODEGREES;
+
 
   AnglePitchAccel-=ACCELPITCHMANUALOFFSET;
   AngleRollAccel-=ACCELROLLMANUALOFFSET;
 
-  AnglePitch=0.998*AnglePitchGyro + 0.002*AnglePitchAccel;
-  AngleRoll=0.998*AngleRollGyro + 0.002*AngleRollAccel;
-
+  AnglePitch=AnglePitchGyro;// + 0.01*AnglePitchAccel;
+  AngleRoll=AngleRollGyro; //+ *AngleRollAccel;
+  AngleYaw=AngleYawGyro;
 
   //PID input Filtered
   PitchGyroPIDin =  (PitchGyroPIDin * 0.7) + (AnglePitch * 0.3);
   RollGyroPIDin = (RollGyroPIDin * 0.7) + (AngleRoll * 0.3);
-  YawGyroPIDin = (YawGyroPIDin * 0.7) + (GyroZcal * GYROFACTORANGLEDEG * 0.3);
+  YawGyroPIDin = (YawGyroPIDin * 0.7) + (AngleYaw * 0.3);
   //-------------------------------------------------------------------
 
   //SCALE DATA

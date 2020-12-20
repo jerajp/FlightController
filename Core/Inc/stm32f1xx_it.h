@@ -63,8 +63,10 @@ float ScaleDataFl(float in_value,float in_min,float in_max, float out_min, float
 float pid(float pid_reference, float pid_input, float pid_p, float pid_i, float pid_d, float *integral, float *diffErrHist, float PIDimax, float PIDmax);
 
 extern uint32_t BattmVAVG;
-extern float AnglePitch, AnglePitchGyro,AnglePitchAccel;
-extern float AngleRoll, AngleRollGyro, AngleRollAccel;
+extern double AnglePitch, AnglePitchGyro,AnglePitchAccel;
+extern double AngleRoll, AngleRollGyro, AngleRollAccel;
+extern double AngleYaw, AngleYawGyro;
+extern double Acc_vector;
 extern float pid_output_roll,pid_output_pitch,pid_output_yaw;
 
 /* USER CODE END EFP */
