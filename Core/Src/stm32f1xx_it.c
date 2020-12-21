@@ -128,6 +128,9 @@ uint16_t temp_GYR_X;
 uint16_t temp_GYR_Y;
 uint16_t temp_GYR_Z;
 
+
+uint8_t dataTEST[200];
+
 /* USER CODE END PV */
 
 /* Private function prototypes -----------------------------------------------*/
@@ -281,6 +284,41 @@ void SysTick_Handler(void)
 /* For the available peripheral interrupt handler names,                      */
 /* please refer to the startup file (startup_stm32f1xx.s).                    */
 /******************************************************************************/
+
+/**
+  * @brief This function handles EXTI line0 interrupt.
+  */
+void EXTI0_IRQHandler(void)
+{
+  /* USER CODE BEGIN EXTI0_IRQn 0 */
+
+  /* USER CODE END EXTI0_IRQn 0 */
+  HAL_GPIO_EXTI_IRQHandler(GPIO_PIN_0);
+  /* USER CODE BEGIN EXTI0_IRQn 1 */
+
+  ///watch1++;
+  MPU6050_GetFifoBytes(&hi2c2,MPU6050_ADDRESS,dataTEST,100);
+
+  watch1=dataTEST[0];
+  watch2=dataTEST[1];
+  watch3=dataTEST[2];
+  watch4=dataTEST[3];
+  watch5=dataTEST[4];
+  watch6=dataTEST[5];
+  //MPU6050_GetCurrentFIFOPacket(&hi2c2,MPU6050_ADDRESS,fifoBuffer,packetSize);
+
+
+
+  //Testing
+  //MPU6050_GetFIFOEnableStatus(&hi2c2,MPU6050_ADDRESS); JE aktiviran!
+  //MPU6050_FifoOvreflowStatus(&hi2c2,MPU6050_ADDRESS);
+  //MPU6050_GetFifoCount(&hi2c2,MPU6050_ADDRESS);
+  //MPU6050_ResetFIFO(&hi2c2,MPU6050_ADDRESS); //reset FIFO
+  //MPU6050_GetIntStatus(&hi2c2,MPU6050_ADDRESS); //ko preberes se pobrise, ce 2x beres je drugic 0, prvic je 3
+
+
+  /* USER CODE END EXTI0_IRQn 1 */
+}
 
 /**
   * @brief This function handles TIM2 global interrupt.
@@ -593,9 +631,17 @@ void TIM2_IRQHandler(void)
     		LoopCounter=0;
   }//-----------------------------------------------------------------
   //MPU 6050-----------------------------------------------------------
+  //MPUintActive=HAL_GPIO_ReadPin(MPU6050_INT_GPIO_Port,MPU6050_INT_Pin);
+  //if(MPUintActive)
+  //{
+	  //MPU6050_GetCurrentFIFOPacket(&hi2c2,MPU6050_ADDRESS,fifoBuffer,packetSize);
+	  //CalculateQuaternions(&QuaternionMPU60500,fifoBuffer);
+	  //CalculateGravityVector(&QuaternionMPU60500, &GravityVectorMPU6050);
+	  //CalculateYawPitchRoll(&QuaternionMPU60500, &GravityVectorMPU6050,&AnglesMPU6050_DMP);
+  //}
 
-  MPU6050_accread(&hi2c2,&mpu6050DataStr);
-  MPU6050_gyroread(&hi2c2,&mpu6050DataStr);
+  //MPU6050_accread(&hi2c2,&mpu6050DataStr);
+  //MPU6050_gyroread(&hi2c2,&mpu6050DataStr);
 
 /*  if(mpu6050DataStr.Accelerometer_X < 0 )temp_ACC_X=-mpu6050DataStr.Accelerometer_X;
   else temp_ACC_X=mpu6050DataStr.Accelerometer_X;

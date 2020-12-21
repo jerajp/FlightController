@@ -187,6 +187,12 @@ extern int16_t GyroXcal,GyroYcal,GyroZcal;
 extern int16_t GyroXOff,GyroYOff,GyroZOff;
 extern int32_t SUMGyroX,SUMGyroY,SUMGyroZ;
 extern MPU6050str	mpu6050DataStr;
+extern uint32_t MPUintActive;
+extern uint8_t fifoBuffer[64]; // FIFO storage buffer
+extern uint16_t packetSize;
+extern struct Quaternions QuaternionMPU60500;
+extern struct GravityVector GravityVectorMPU6050;
+extern struct Angles AnglesMPU6050_DMP;
 
 //Inputs
 extern float ThrottleINscaled;
@@ -213,6 +219,9 @@ extern struct FlashDatastruct FlashDataFlash;
 /* Private defines -----------------------------------------------------------*/
 #define LED1_Pin GPIO_PIN_13
 #define LED1_GPIO_Port GPIOC
+#define MPU6050_INT_Pin GPIO_PIN_0
+#define MPU6050_INT_GPIO_Port GPIOB
+#define MPU6050_INT_EXTI_IRQn EXTI0_IRQn
 #define NRF24_CE_Pin GPIO_PIN_12
 #define NRF24_CE_GPIO_Port GPIOB
 #define NRF24_IRQ_Pin GPIO_PIN_12

@@ -89,8 +89,10 @@ int16_t GyroXcal,GyroYcal,GyroZcal;
 int16_t GyroXOff,GyroYOff,GyroZOff;
 int32_t SUMGyroX,SUMGyroY,SUMGyroZ;
 uint32_t i=0;
-uint8_t fifoBuffer[64]; // FIFO storage buffer
-uint16_t packetSize;    // expected DMP packet size (default is 42 bytes)
+uint8_t fifoBuffer[64];    // FIFO storage buffer
+uint16_t packetSize=42;    // expected DMP packet size (default is 42 bytes)
+uint32_t MPUintActive;
+
 
 //UART DEBUG
 char UartTXbuff0[100];
@@ -102,6 +104,9 @@ uint32_t GyroCalibStatus=0;
 struct FlashDatastruct FlashDataDefault; //Default constant embedded in Code
 struct FlashDatastruct FlashDataFlash;  //Constants read from Flash
 struct FlashDatastruct FlashDataActive; //Active constants
+struct Quaternions QuaternionMPU60500;
+struct GravityVector GravityVectorMPU6050;
+struct Angles AnglesMPU6050_DMP;
 
 /* USER CODE END PV */
 
@@ -209,12 +214,10 @@ int main(void)
 
   HAL_Delay(400);//wait for stable power
 
+  //MPU6050 Init
   MPU6050rezulatat=MPU6050_check(&hi2c2);
   MPU6050_init(&hi2c2);
-
-  //MPU6050_DMP_Init(&hi2c2);
-
-  //MPU6050_DMP_Enable(&hi2c2,MPU6050_ADDRESS,0);//enable DMP
+  MPU6050_DMP_Init(&hi2c2);
 
   HAL_Delay(400);//for stable MPU6050 readings after init
 
@@ -264,7 +267,7 @@ int main(void)
   nRF24_CE_H();//Enable RX
 
   //get GYRO offset
-  HAL_Delay(2000);//wait to connect battery
+  /*HAL_Delay(2000);//wait to connect battery
   GyroCalibStatus=1;
 
   SUMGyroX=0;
@@ -298,7 +301,7 @@ int main(void)
 
   AnglePitchGyro=AnglePitchAccel;
   AngleRollGyro=AngleRollAccel;
-  AngleYawGyro=0;
+  AngleYawGyro=0;*/
 
   HAL_TIM_PWM_Start(&htim1, TIM_CHANNEL_1);
   HAL_TIM_PWM_Start(&htim1, TIM_CHANNEL_2);
@@ -306,6 +309,9 @@ int main(void)
   HAL_TIM_PWM_Start(&htim1, TIM_CHANNEL_4);
 
   MotorStatus=MOTOROFF;
+
+  MPU6050_DMP_Enable(&hi2c2,MPU6050_ADDRESS,1);//enable DMP (writing to FIFO)
+
   HAL_TIM_Base_Start_IT(&htim2);//Start at the END of Main Initialization
 
   ///-----------------
@@ -354,6 +360,18 @@ int main(void)
 	  sprintf(UartTXbuff0, "\n\r" );
 	  WriteString(UartTXbuff0);
 
+	  sprintf(UartTXbuff0, "Pitch DMP=%.2f \n\r",AnglesMPU6050_DMP.pitch);
+	  WriteString(UartTXbuff0);
+
+	  sprintf(UartTXbuff0, "Roll DMP=%.2f \n\r",AnglesMPU6050_DMP.roll);
+	  WriteString(UartTXbuff0);
+
+	  sprintf(UartTXbuff0, "Yaw DMP=%.2f \n\r",AnglesMPU6050_DMP.yaw);
+	  WriteString(UartTXbuff0);
+
+	  sprintf(UartTXbuff0, "\n\r" );
+	  WriteString(UartTXbuff0);
+
 	  sprintf(UartTXbuff0, "Pitch=%.2f \n\r",AnglePitch);
 	  WriteString(UartTXbuff0);
 
@@ -378,13 +396,10 @@ int main(void)
 	  sprintf(UartTXbuff0, "PWM 1:%u  2:%u  3:%u  4:%u   \n\r",PWM_Mot1,PWM_Mot2,PWM_Mot3,PWM_Mot4);
 	  WriteString(UartTXbuff0);
 
-	  sprintf(UartTXbuff0, "\n\rINPUTS \n\r" );
+	  sprintf(UartTXbuff0, "Toggle %d %d %d %d %d %d  ",togg1,togg2,togg3,togg4,togg5,togg6);
 	  WriteString(UartTXbuff0);
 
-	  sprintf(UartTXbuff0, "Toggle %d %d %d %d %d %d \n\r",togg1,togg2,togg3,togg4,togg5,togg6);
-	  WriteString(UartTXbuff0);
-
-	  sprintf(UartTXbuff0, "Potenc %d %d \n\r",potenc1,potenc2);
+	  sprintf(UartTXbuff0, "Potenc %d %d  ",potenc1,potenc2);
 	  WriteString(UartTXbuff0);
 
 	  sprintf(UartTXbuff0, "YL %d %d  YD %d %d \n\r",Ljoyupdown, Ljoyleftright, Djoyupdown, Djoyleftright);
@@ -468,7 +483,16 @@ int main(void)
 	  sprintf(UartTXbuff0, "watch %.2f %2.f %.2f %.2f \n\r",watch1fl,watch2fl,watch3fl,watch4fl);
 	  WriteString(UartTXbuff0);
 
-	  sprintf(UartTXbuff0, "off %d %d %d %.10f\n\r",GyroXOff,GyroYOff,GyroZOff,GYROFACTORANGLE);
+	  sprintf(UartTXbuff0, "%d %d %d %d\n\r",fifoBuffer[0],fifoBuffer[1],fifoBuffer[2],fifoBuffer[3]);
+	  WriteString(UartTXbuff0);
+
+	  sprintf(UartTXbuff0, "%d %d %d %d\n\r",fifoBuffer[4],fifoBuffer[5],fifoBuffer[6],fifoBuffer[7]);
+	  WriteString(UartTXbuff0);
+
+	  sprintf(UartTXbuff0, "%d %d %d %d\n\r",fifoBuffer[8],fifoBuffer[9],fifoBuffer[10],fifoBuffer[11]);
+	  WriteString(UartTXbuff0);
+
+	  sprintf(UartTXbuff0, "%d %d %d %d\n\r",fifoBuffer[12],fifoBuffer[13],fifoBuffer[14],fifoBuffer[15]);
 	  WriteString(UartTXbuff0);
 
   }
@@ -832,6 +856,12 @@ static void MX_GPIO_Init(void)
   GPIO_InitStruct.Speed = GPIO_SPEED_FREQ_LOW;
   HAL_GPIO_Init(LED1_GPIO_Port, &GPIO_InitStruct);
 
+  /*Configure GPIO pin : MPU6050_INT_Pin */
+  GPIO_InitStruct.Pin = MPU6050_INT_Pin;
+  GPIO_InitStruct.Mode = GPIO_MODE_IT_RISING;
+  GPIO_InitStruct.Pull = GPIO_NOPULL;
+  HAL_GPIO_Init(MPU6050_INT_GPIO_Port, &GPIO_InitStruct);
+
   /*Configure GPIO pin : NRF24_CE_Pin */
   GPIO_InitStruct.Pin = NRF24_CE_Pin;
   GPIO_InitStruct.Mode = GPIO_MODE_OUTPUT_PP;
@@ -858,6 +888,10 @@ static void MX_GPIO_Init(void)
   GPIO_InitStruct.Pull = GPIO_NOPULL;
   GPIO_InitStruct.Speed = GPIO_SPEED_FREQ_HIGH;
   HAL_GPIO_Init(TEST1_PIN_GPIO_Port, &GPIO_InitStruct);
+
+  /* EXTI interrupt init*/
+  HAL_NVIC_SetPriority(EXTI0_IRQn, 0, 0);
+  HAL_NVIC_EnableIRQ(EXTI0_IRQn);
 
 }
 
