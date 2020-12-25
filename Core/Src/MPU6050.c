@@ -1,115 +1,14 @@
 // Functions to manage the MPU6050 sensor
 
+//Basic functions for MPU6050 were written with the use of the chip datasheet and HAL libraries for STM32
+//DMP functions are not documented  in datasheet
+//DMP Functions are ported from Arduino code written by Jeff Rowberg
+//There is STM32 library for MPU6050 by Jeff Rowberg but it lacks DMP functionality
+
+
 #include "MPU6050.h"
 
-#define MPU6050_I_AM_VAL				0x68 //value of register WHO_AM_I
-
-//registers
-#define MPU6050_WHO_AM_I				0x75
-#define MPU6050_RA_PWR_MGMT_1			0x6B
-#define MPU6050_RA_SMPLRT_DIV			0x19
-#define MPU6050_RA_GYRO_CONFIG			0x1B
-#define MPU6050_RA_ACCEL_CONFIG			0x1C
-#define MPU6050_RA_GYRO_XOUT_H			0x43
-#define MPU6050_ACCEL_RA_XOUT_H			0x3B
-#define MPU6050_RA_USER_CTRL      		0x6A
-#define MPU6050_RA_BANK_SEL         	0x6D
-#define MPU6050_RA_MEM_START_ADDR   	0x6E
-#define MPU6050_RA_MEM_R_W       	    0x6F
-#define MPU6050_RA_XG_OFFS_TC       	0x00 //[7] PWR_MODE, [6:1] XG_OFFS_TC, [0] OTP_BNK_VLD
-#define MPU6050_RA_I2C_SLV0_ADDR    	0x25
-#define MPU6050_RA_INT_ENABLE     		0x38
-#define MPU6050_RA_SMPLRT_DIV       	0x19
-#define MPU6050_RA_CONFIG          		0x1A
-#define MPU6050_RA_MOT_THR          	0x1F
-#define MPU6050_RA_ZRMOT_THR       		0x21
-#define MPU6050_RA_MOT_DUR         		0x20
-#define MPU6050_RA_ZRMOT_DUR        	0x22
-#define MPU6050_RA_FIFO_COUNTH    	    0x72
-#define MPU6050_RA_FIFO_R_W        		0x74
-#define MPU6050_RA_INT_STATUS       	0x3A
-#define MPU6050_RA_DMP_CFG_1       		0x70
-#define MPU6050_RA_DMP_CFG_2        	0x71
-
-#define MPU6050_PWR1_DEVICE_RESET_BIT   	7
-#define MPU6050_PWR1_SLEEP_BIT          	6
-#define MPU6050_USERCTRL_DMP_EN_BIT			7
-#define MPU6050_USERCTRL_FIFO_EN_BIT        6
-#define MPU6050_USERCTRL_I2C_MST_EN_BIT 	5
-#define MPU6050_USERCTRL_DMP_RESET_BIT		3
-#define MPU6050_USERCTRL_FIFO_RESET_BIT     2
-#define MPU6050_USERCTRL_I2C_MST_RESET_BIT  1
-#define MPU6050_WHO_AM_I_BIT        		6
-#define MPU6050_TC_OTP_BNK_VLD_BIT			0
-#define MPU6050_PWR1_CLKSEL_BIT         	2
-#define MPU6050_GCONFIG_FS_SEL_BIT      	4
-#define MPU6050_ACONFIG_AFS_SEL_BIT         4
-#define MPU6050_CFG_EXT_SYNC_SET_BIT  	    5
-#define MPU6050_CFG_DLPF_CFG_BIT   			2
-#define MPU6050_INTERRUPT_FIFO_OFLOW_BIT    4
-
-
-#define MPU6050_WHO_AM_I_LENGTH   			6
-#define MPU6050_PWR1_CLKSEL_LENGTH    	    3
-#define MPU6050_GCONFIG_FS_SEL_LENGTH   	2
-#define MPU6050_ACONFIG_AFS_SEL_LENGTH      2
-#define MPU6050_CFG_EXT_SYNC_SET_LENGTH 	3
-#define MPU6050_CFG_DLPF_CFG_LENGTH 		3
-
-#define MPU6050_EXT_SYNC_DISABLED       0x0
-#define MPU6050_EXT_SYNC_TEMP_OUT_L     0x1
-#define MPU6050_EXT_SYNC_GYRO_XOUT_L    0x2
-#define MPU6050_EXT_SYNC_GYRO_YOUT_L    0x3
-#define MPU6050_EXT_SYNC_GYRO_ZOUT_L    0x4
-#define MPU6050_EXT_SYNC_ACCEL_XOUT_L   0x5
-#define MPU6050_EXT_SYNC_ACCEL_YOUT_L   0x6
-#define MPU6050_EXT_SYNC_ACCEL_ZOUT_L   0x7
-
-#define MPU6050_DMP_FIFO_RATE_DIVISOR 0x01
-
-#define MPU6050_ACCEL_FS_2          0x00
-#define MPU6050_ACCEL_FS_4          0x01
-#define MPU6050_ACCEL_FS_8          0x02
-#define MPU6050_ACCEL_FS_16         0x03
-
-#define MPU6050_GYRO_FS_250        	0x00
-#define MPU6050_GYRO_FS_500         0x01
-#define MPU6050_GYRO_FS_1000        0x02
-#define MPU6050_GYRO_FS_2000        0x03
-
-#define MPU6050_CLOCK_INTERNAL          0x00
-#define MPU6050_CLOCK_PLL_XGYRO         0x01
-#define MPU6050_CLOCK_PLL_YGYRO         0x02
-#define MPU6050_CLOCK_PLL_ZGYRO         0x03
-#define MPU6050_CLOCK_PLL_EXT32K        0x04
-#define MPU6050_CLOCK_PLL_EXT19M        0x05
-#define MPU6050_CLOCK_KEEP_RESET        0x07
-
-#define MPU6050_DLPF_BW_256         0x00
-#define MPU6050_DLPF_BW_188         0x01
-#define MPU6050_DLPF_BW_98          0x02
-#define MPU6050_DLPF_BW_42          0x03
-#define MPU6050_DLPF_BW_20          0x04
-#define MPU6050_DLPF_BW_10          0x05
-#define MPU6050_DLPF_BW_5           0x06
-
-
-
-#define MPU6050_DMP_MEMORY_CHUNK_SIZE   16
-
-#define BUFFER_LENGTH 32
-
-#define MPU6050_INTERRUPT_FIFO_OFLOW_BIT    4
-#define MPU6050_INTERRUPT_DMP_INT_BIT       1
-
-#define MPU6050_DMP_CODE_SIZE       1929    // dmpMemory[]
-#define MPU6050_DMP_CONFIG_SIZE     192     // dmpConfig[]
-#define MPU6050_DMP_UPDATES_SIZE    47      // dmpUpdates[]
-
-#define min(a,b)            (((a) < (b)) ? (a) : (b))
-
-#define pgm_read_byte(addr) (*(const unsigned char *)(addr))
-
+//DMP image FW for MPU6050 needs to be writen to chip on startup for DMP to work
 const unsigned char dmpMemory[MPU6050_DMP_CODE_SIZE] = {
 	/* bank # 0 */
 	0xFB, 0x00, 0x00, 0x3E, 0x00, 0x0B, 0x00, 0x36, 0x00, 0x01, 0x00, 0x02, 0x00, 0x03, 0x00, 0x00,
@@ -243,6 +142,7 @@ const unsigned char dmpMemory[MPU6050_DMP_CODE_SIZE] = {
 
 };
 
+
 void MPU6050_Write_Single_Bit(I2C_HandleTypeDef* I2Cx,uint8_t DeviceAddress, uint8_t RegisterAddress, uint8_t BitPosition, uint8_t BitValue)
 {
 	uint8_t data;
@@ -270,7 +170,6 @@ void MPU6050_Write_Few_Bits(I2C_HandleTypeDef* I2Cx,uint8_t DeviceAddress, uint8
 	HAL_I2C_Mem_Write(I2Cx, DeviceAddress, RegisterAddress, 1,&temp, 1, 1000); //write corected data (1 bit only) back to register
 }
 
-
 uint8_t MPU6050_Read_Single_Bit(I2C_HandleTypeDef* I2Cx,uint8_t DeviceAddress, uint8_t RegisterAddress, uint8_t BitPosition)
 {
 	uint8_t data;
@@ -284,10 +183,6 @@ uint8_t MPU6050_Read_Single_Bit(I2C_HandleTypeDef* I2Cx,uint8_t DeviceAddress, u
 	return data;
 }
 
-
-
-
-
 MPU6050_Result MPU6050_check(I2C_HandleTypeDef* I2Cx)
 {
 	//I2C_HandleTypeDef* Handle = I2Cx;
@@ -299,6 +194,7 @@ MPU6050_Result MPU6050_check(I2C_HandleTypeDef* I2Cx)
 	else return MPU6050_NOTDETECTED;
 
 }
+
 void MPU6050_accread(I2C_HandleTypeDef* I2Cx, MPU6050str* DataStruct)
 {
 	uint8_t data[6];
@@ -309,6 +205,7 @@ void MPU6050_accread(I2C_HandleTypeDef* I2Cx, MPU6050str* DataStruct)
 	DataStruct->Accelerometer_Z = (int16_t)(data[4] << 8 | data [5]);
 
 }
+
 void MPU6050_gyroread(I2C_HandleTypeDef* I2Cx, MPU6050str* DataStruct)
 {
 	uint8_t data[6];
@@ -354,10 +251,7 @@ void MPU6050_init(I2C_HandleTypeDef* I2Cx)
 	MPU6050_SetSleepEnabled(I2Cx,MPU6050_ADDRESS,0);
 	MPU6050_SetGyroRange(I2Cx,MPU6050_ADDRESS, MPU6050_GYRO_FS_250);
 	MPU6050_SetAccelRange(I2Cx,MPU6050_ADDRESS, MPU6050_ACCEL_FS_2);
-
-
 }
-
 
 void MPU6050_DMP_Enable(I2C_HandleTypeDef* I2Cx,uint8_t DeviceAddress, uint8_t enable)
 {
@@ -512,7 +406,7 @@ void MPU6050_ResetFIFO(I2C_HandleTypeDef* I2Cx, uint8_t DeviceAddress)
 uint16_t MPU6050_GetFifoCount(I2C_HandleTypeDef* I2Cx, uint8_t DeviceAddress)
 {
 	uint8_t data[2];
-	HAL_I2C_Mem_Read (I2Cx, DeviceAddress, MPU6050_RA_FIFO_COUNTH, 2, data, 1, 1000);
+	HAL_I2C_Mem_Read (I2Cx, DeviceAddress, MPU6050_RA_FIFO_COUNTH, 1, data, 2, 1000);
 	return (((uint16_t)data[0]) << 8) | data[1];
 }
 
@@ -527,7 +421,7 @@ void MPU6050_GetFifoBytes(I2C_HandleTypeDef* I2Cx, uint8_t DeviceAddress,uint8_t
 {
     if(length > 0)
     {
-    	HAL_I2C_Mem_Read (I2Cx, DeviceAddress, MPU6050_RA_FIFO_R_W, length, data, 1, 1000);
+    	HAL_I2C_Mem_Read (I2Cx, DeviceAddress, MPU6050_RA_FIFO_R_W, 1 , data, length, 1000);
     }
 
     else
@@ -733,9 +627,6 @@ uint8_t MPU6050_DMP_Init(I2C_HandleTypeDef* I2Cx)
 }
 
 
-
-
-
 void CalculateQuaternions(struct Quaternions *q, uint8_t *fifo_data)
 {
 
@@ -746,10 +637,10 @@ void CalculateQuaternions(struct Quaternions *q, uint8_t *fifo_data)
 	q3=((int32_t)fifo_data[8] << 24) | ((int32_t)fifo_data[9] << 16) | ((int32_t)fifo_data[10] << 8) | fifo_data[11];
 	q4=((int32_t)fifo_data[12] << 24) | ((int32_t)fifo_data[13] << 16) | ((int32_t)fifo_data[14] << 8) | fifo_data[15];
 
-	q->w=(float)(q1>>16) / (float)(16384.0);
-	q->x=(float)(q2>>16) / (float)(16384.0);
-	q->y=(float)(q3>>16) / (float)(16384.0);
-	q->z=(float)(q4>>16) / (float)(16384.0);
+	q->w=(float)(q1>>16) / ACCELCONSTANT; //Depends on ACCEL RANGE!
+	q->x=(float)(q2>>16) / ACCELCONSTANT; //Depends on ACCEL RANGE!
+	q->y=(float)(q3>>16) / ACCELCONSTANT; //Depends on ACCEL RANGE!
+	q->z=(float)(q4>>16) / ACCELCONSTANT; //Depends on ACCEL RANGE!
 }
 
 void CalculateGravityVector(struct Quaternions *q, struct GravityVector *v)
@@ -761,12 +652,41 @@ void CalculateGravityVector(struct Quaternions *q, struct GravityVector *v)
 
 void CalculateYawPitchRoll(struct Quaternions *q, struct GravityVector *v, struct Angles *ang)
 {
-	// yaw: (about Z axis)
-	ang->yaw = atan2(2*q -> x*q -> y - 2*q -> w*q -> z, 2*q -> w*q -> w + 2*q -> x*q -> x - 1);
-    // pitch: (nose up/down, about Y axis)
-	ang->pitch = atan(v -> x / sqrt(v -> y*v -> y + v -> z*v -> z));
-    // roll: (tilt left/right, about X axis)
-	ang->roll = atan(v -> y / sqrt(v -> x*v -> x + v -> z*v -> z));
+	//X,Y,Z angles in radians calculated from Quaternions
+	float zRad;
+	float yRad;
+	float xRad;
+
+	//(about Z axis)
+	zRad = atan2(2*q -> x*q -> y - 2*q -> w*q -> z, 2*q -> w*q -> w + 2*q -> x*q -> x - 1);
+
+	//(about Y axis)
+	yRad = atan2(v -> x , sqrt(v -> y*v -> y + v -> z*v -> z));
+
+	//(about X axis)
+	xRad = atan2(v -> y , v -> z);
+	if (v -> z < 0)
+	{
+		if(xRad > 0)
+		{
+			xRad = PI - xRad;
+		}
+		else
+		{
+			xRad = -PI - xRad;
+		}
+	}
+
+	//MPU6050 position on Drone--> X direction (+ drone right)-Rotation around x Pitch, Y direction (+ drone front) -Rotation around Y Roll
+	ang->yaw=zRad*RADIANSTODEGREES;
+	if ( ang->yaw < -180 ) ang->yaw += 360;
+
+	ang->pitch=xRad*RADIANSTODEGREES;
+	if ( ang->pitch < -180 ) ang->pitch += 360;
+
+	ang->roll=yRad*RADIANSTODEGREES;
+	if ( ang->roll < -180 ) ang->roll += 360;
+	ang->roll=-ang->roll; //positive angle drone tilt to right
+
+
 }
-
-

@@ -215,9 +215,13 @@ int main(void)
   HAL_Delay(400);//wait for stable power
 
   //MPU6050 Init
+  HAL_Delay(2000);
   MPU6050rezulatat=MPU6050_check(&hi2c2);
+  //HAL_Delay(2000);
   MPU6050_init(&hi2c2);
+ // HAL_Delay(2000);
   MPU6050_DMP_Init(&hi2c2);
+  //HAL_Delay(2000);
 
   HAL_Delay(400);//for stable MPU6050 readings after init
 
@@ -480,20 +484,20 @@ int main(void)
 	  sprintf(UartTXbuff0, "watch %d %d %d %d %d %d\n\r",watch1,watch2,watch3,watch4,watch5,watch6);
 	  WriteString(UartTXbuff0);
 
-	  sprintf(UartTXbuff0, "watch %.2f %2.f %.2f %.2f \n\r",watch1fl,watch2fl,watch3fl,watch4fl);
+	  sprintf(UartTXbuff0, "watch %.2f %.2f %.2f %.2f \n\r",watch1fl,watch2fl,watch3fl,watch4fl);
 	  WriteString(UartTXbuff0);
 
-	  sprintf(UartTXbuff0, "%d %d %d %d\n\r",fifoBuffer[0],fifoBuffer[1],fifoBuffer[2],fifoBuffer[3]);
-	  WriteString(UartTXbuff0);
+	  //sprintf(UartTXbuff0, "%d %d %d %d\n\r",fifoBuffer[0],fifoBuffer[1],fifoBuffer[2],fifoBuffer[3]);
+	  //WriteString(UartTXbuff0);
 
-	  sprintf(UartTXbuff0, "%d %d %d %d\n\r",fifoBuffer[4],fifoBuffer[5],fifoBuffer[6],fifoBuffer[7]);
-	  WriteString(UartTXbuff0);
+	  //sprintf(UartTXbuff0, "%d %d %d %d\n\r",fifoBuffer[4],fifoBuffer[5],fifoBuffer[6],fifoBuffer[7]);
+	 // WriteString(UartTXbuff0);
 
-	  sprintf(UartTXbuff0, "%d %d %d %d\n\r",fifoBuffer[8],fifoBuffer[9],fifoBuffer[10],fifoBuffer[11]);
-	  WriteString(UartTXbuff0);
+	  //sprintf(UartTXbuff0, "%d %d %d %d\n\r",fifoBuffer[8],fifoBuffer[9],fifoBuffer[10],fifoBuffer[11]);
+	 // WriteString(UartTXbuff0);
 
-	  sprintf(UartTXbuff0, "%d %d %d %d\n\r",fifoBuffer[12],fifoBuffer[13],fifoBuffer[14],fifoBuffer[15]);
-	  WriteString(UartTXbuff0);
+	 // sprintf(UartTXbuff0, "%d %d %d %d\n\r",fifoBuffer[12],fifoBuffer[13],fifoBuffer[14],fifoBuffer[15]);
+	 // WriteString(UartTXbuff0);
 
   }
   /* USER CODE END 3 */

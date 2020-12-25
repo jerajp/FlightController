@@ -78,10 +78,16 @@ extern "C" {
 #define GYROFACTORANGLE (double)( (1) / (32.8 * 500) )  // [deg]   units 2ms loop 500 readings per second
 #define GYROFACTORANGLEDEG (double)( 1 / 32.8 )  	   // [deg/s] units 65.5 factor-from gyro set-up
 #define DEGREESTORADIANS (double)( 0.017453292 )  //conversion factor from degrees to radians
-#define RADIANSTODEGREES (double)(57.29578)
+#define RADIANSTODEGREES (double)(57.2957795)
 #define ACCELPITCHMANUALOFFSET (double)(0.2)		//spirit level offset in degrees
 #define ACCELROLLMANUALOFFSET (double)(0.5)		//spirit level offset in degrees
 #define GYROCALIBVALUES 1000
+
+//MPU6050
+#define ACCELCONSTANT (float)(16384.0)  //uncomment for AFS_SEL=0 (+-2G) used in DMP algorithm
+//#define ACCELCONSTANT (float)(8192.0)  //uncomment for AFS_SEL=1 (+-4G) used in DMP algorithm
+//#define ACCELCONSTANT (float)(4096.0)  //uncomment for AFS_SEL=2 (+-8G) used in DMP algorithm
+//#define ACCELCONSTANT (float)(2048.0)  //uncomment for AFS_SEL=3 (+-16G) used in DMP algorithm
 
 //SAFETY THROTTLE CHECK AT STARTUP
 #define MOTORSTARTBLOCKTHRESHOLD	200  //max throttle stick position to allow start

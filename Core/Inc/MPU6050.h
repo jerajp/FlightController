@@ -12,6 +12,115 @@
 
 #define MPU6050_ADDRESS	0xD0
 
+#define MPU6050_I_AM_VAL				0x68 //value of register WHO_AM_I
+
+//registers
+#define MPU6050_WHO_AM_I				0x75
+#define MPU6050_RA_PWR_MGMT_1			0x6B
+#define MPU6050_RA_SMPLRT_DIV			0x19
+#define MPU6050_RA_GYRO_CONFIG			0x1B
+#define MPU6050_RA_ACCEL_CONFIG			0x1C
+#define MPU6050_RA_GYRO_XOUT_H			0x43
+#define MPU6050_ACCEL_RA_XOUT_H			0x3B
+#define MPU6050_RA_USER_CTRL      		0x6A
+#define MPU6050_RA_BANK_SEL         	0x6D
+#define MPU6050_RA_MEM_START_ADDR   	0x6E
+#define MPU6050_RA_MEM_R_W       	    0x6F
+#define MPU6050_RA_XG_OFFS_TC       	0x00 //[7] PWR_MODE, [6:1] XG_OFFS_TC, [0] OTP_BNK_VLD
+#define MPU6050_RA_I2C_SLV0_ADDR    	0x25
+#define MPU6050_RA_INT_ENABLE     		0x38
+#define MPU6050_RA_SMPLRT_DIV       	0x19
+#define MPU6050_RA_CONFIG          		0x1A
+#define MPU6050_RA_MOT_THR          	0x1F
+#define MPU6050_RA_ZRMOT_THR       		0x21
+#define MPU6050_RA_MOT_DUR         		0x20
+#define MPU6050_RA_ZRMOT_DUR        	0x22
+#define MPU6050_RA_FIFO_COUNTH    	    0x72
+#define MPU6050_RA_FIFO_R_W        		0x74
+#define MPU6050_RA_INT_STATUS       	0x3A
+#define MPU6050_RA_DMP_CFG_1       		0x70
+#define MPU6050_RA_DMP_CFG_2        	0x71
+
+#define MPU6050_PWR1_DEVICE_RESET_BIT   	7
+#define MPU6050_PWR1_SLEEP_BIT          	6
+#define MPU6050_USERCTRL_DMP_EN_BIT			7
+#define MPU6050_USERCTRL_FIFO_EN_BIT        6
+#define MPU6050_USERCTRL_I2C_MST_EN_BIT 	5
+#define MPU6050_USERCTRL_DMP_RESET_BIT		3
+#define MPU6050_USERCTRL_FIFO_RESET_BIT     2
+#define MPU6050_USERCTRL_I2C_MST_RESET_BIT  1
+#define MPU6050_WHO_AM_I_BIT        		6
+#define MPU6050_TC_OTP_BNK_VLD_BIT			0
+#define MPU6050_PWR1_CLKSEL_BIT         	2
+#define MPU6050_GCONFIG_FS_SEL_BIT      	4
+#define MPU6050_ACONFIG_AFS_SEL_BIT         4
+#define MPU6050_CFG_EXT_SYNC_SET_BIT  	    5
+#define MPU6050_CFG_DLPF_CFG_BIT   			2
+#define MPU6050_INTERRUPT_FIFO_OFLOW_BIT    4
+
+
+#define MPU6050_WHO_AM_I_LENGTH   			6
+#define MPU6050_PWR1_CLKSEL_LENGTH    	    3
+#define MPU6050_GCONFIG_FS_SEL_LENGTH   	2
+#define MPU6050_ACONFIG_AFS_SEL_LENGTH      2
+#define MPU6050_CFG_EXT_SYNC_SET_LENGTH 	3
+#define MPU6050_CFG_DLPF_CFG_LENGTH 		3
+
+#define MPU6050_EXT_SYNC_DISABLED       0x0
+#define MPU6050_EXT_SYNC_TEMP_OUT_L     0x1
+#define MPU6050_EXT_SYNC_GYRO_XOUT_L    0x2
+#define MPU6050_EXT_SYNC_GYRO_YOUT_L    0x3
+#define MPU6050_EXT_SYNC_GYRO_ZOUT_L    0x4
+#define MPU6050_EXT_SYNC_ACCEL_XOUT_L   0x5
+#define MPU6050_EXT_SYNC_ACCEL_YOUT_L   0x6
+#define MPU6050_EXT_SYNC_ACCEL_ZOUT_L   0x7
+
+#define MPU6050_DMP_FIFO_RATE_DIVISOR 0x01
+
+#define MPU6050_ACCEL_FS_2          0x00
+#define MPU6050_ACCEL_FS_4          0x01
+#define MPU6050_ACCEL_FS_8          0x02
+#define MPU6050_ACCEL_FS_16         0x03
+
+#define MPU6050_GYRO_FS_250        	0x00
+#define MPU6050_GYRO_FS_500         0x01
+#define MPU6050_GYRO_FS_1000        0x02
+#define MPU6050_GYRO_FS_2000        0x03
+
+#define MPU6050_CLOCK_INTERNAL          0x00
+#define MPU6050_CLOCK_PLL_XGYRO         0x01
+#define MPU6050_CLOCK_PLL_YGYRO         0x02
+#define MPU6050_CLOCK_PLL_ZGYRO         0x03
+#define MPU6050_CLOCK_PLL_EXT32K        0x04
+#define MPU6050_CLOCK_PLL_EXT19M        0x05
+#define MPU6050_CLOCK_KEEP_RESET        0x07
+
+#define MPU6050_DLPF_BW_256         0x00
+#define MPU6050_DLPF_BW_188         0x01
+#define MPU6050_DLPF_BW_98          0x02
+#define MPU6050_DLPF_BW_42          0x03
+#define MPU6050_DLPF_BW_20          0x04
+#define MPU6050_DLPF_BW_10          0x05
+#define MPU6050_DLPF_BW_5           0x06
+
+#define  PI 		(float)(3.1415926535897932384626433832795)
+
+#define MPU6050_DMP_MEMORY_CHUNK_SIZE   16
+
+#define BUFFER_LENGTH 32
+
+#define MPU6050_INTERRUPT_FIFO_OFLOW_BIT    4
+#define MPU6050_INTERRUPT_DMP_INT_BIT       1
+
+#define MPU6050_DMP_CODE_SIZE       1929    // dmpMemory[]
+#define MPU6050_DMP_CONFIG_SIZE     192     // dmpConfig[]
+#define MPU6050_DMP_UPDATES_SIZE    47      // dmpUpdates[]
+
+#define min(a,b)            (((a) < (b)) ? (a) : (b))
+
+#define pgm_read_byte(addr) (*(const unsigned char *)(addr))
+
+
 typedef enum {
 	MPU6050_NOTDETECTED,
 	MPU6050_DETECTED,

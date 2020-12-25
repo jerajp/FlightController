@@ -296,18 +296,24 @@ void EXTI0_IRQHandler(void)
   HAL_GPIO_EXTI_IRQHandler(GPIO_PIN_0);
   /* USER CODE BEGIN EXTI0_IRQn 1 */
 
-  ///watch1++;
-  MPU6050_GetFifoBytes(&hi2c2,MPU6050_ADDRESS,dataTEST,100);
+  watch1++;
+  //MPU6050_GetFifoBytes(&hi2c2,MPU6050_ADDRESS,dataTEST,100);
+  //MPU6050_GetFifoCount(&hi2c2,MPU6050_ADDRESS);
 
-  watch1=dataTEST[0];
-  watch2=dataTEST[1];
-  watch3=dataTEST[2];
-  watch4=dataTEST[3];
-  watch5=dataTEST[4];
-  watch6=dataTEST[5];
-  //MPU6050_GetCurrentFIFOPacket(&hi2c2,MPU6050_ADDRESS,fifoBuffer,packetSize);
-
-
+  //watch1=dataTEST[0];
+  //watch2=dataTEST[1];
+  //watch3=dataTEST[2];
+  //watch4=dataTEST[3];
+  //watch5=dataTEST[4];
+  //watch6=dataTEST[5];
+  MPU6050_GetCurrentFIFOPacket(&hi2c2,MPU6050_ADDRESS,fifoBuffer,packetSize);
+  CalculateQuaternions(&QuaternionMPU60500,fifoBuffer);
+  CalculateGravityVector(&QuaternionMPU60500, &GravityVectorMPU6050);
+  CalculateYawPitchRoll(&QuaternionMPU60500, &GravityVectorMPU6050,&AnglesMPU6050_DMP);
+  watch1fl=QuaternionMPU60500.w;
+  watch2fl=QuaternionMPU60500.x;
+  watch3fl=QuaternionMPU60500.y;
+  watch4fl=QuaternionMPU60500.z;
 
   //Testing
   //MPU6050_GetFIFOEnableStatus(&hi2c2,MPU6050_ADDRESS); JE aktiviran!
