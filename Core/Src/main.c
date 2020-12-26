@@ -215,15 +215,8 @@ int main(void)
   HAL_Delay(400);//wait for stable power
 
   //MPU6050 Init
-  HAL_Delay(2000);
   MPU6050rezulatat=MPU6050_check(&hi2c2);
-  //HAL_Delay(2000);
-  MPU6050_init(&hi2c2);
- // HAL_Delay(2000);
   MPU6050_DMP_Init(&hi2c2);
-  //HAL_Delay(2000);
-
-  HAL_Delay(400);//for stable MPU6050 readings after init
 
   //NRF24 INIT
   SPI2->CR1|=SPI_CR1_SPE; //enable SPI
@@ -270,42 +263,7 @@ int main(void)
 
   nRF24_CE_H();//Enable RX
 
-  //get GYRO offset
-  /*HAL_Delay(2000);//wait to connect battery
-  GyroCalibStatus=1;
-
-  SUMGyroX=0;
-  SUMGyroY=0;
-  SUMGyroZ=0;
-
-  for(i=0;i<1000;i++)
-  {
-	  MPU6050_gyroread(&hi2c2,&mpu6050DataStr);
-	  SUMGyroX+=mpu6050DataStr.Gyroscope_X;
-	  SUMGyroY+=mpu6050DataStr.Gyroscope_Y;
-	  SUMGyroZ+=mpu6050DataStr.Gyroscope_Z;
-	  HAL_Delay(1);
-  }
-
-  GyroXOff=SUMGyroX/1000;
-  GyroYOff=SUMGyroY/1000;
-  GyroZOff=SUMGyroZ/1000;
-
-  GyroCalibStatus=0;
-
-  //startup angles Accel to Gyro transfer--------------------------------------------------------------
-  MPU6050_accread(&hi2c2,&mpu6050DataStr);
-
-  Acc_vector=sqrt((mpu6050DataStr.Accelerometer_X * mpu6050DataStr.Accelerometer_X)+(mpu6050DataStr.Accelerometer_Y * mpu6050DataStr.Accelerometer_Y)+(mpu6050DataStr.Accelerometer_Z * mpu6050DataStr.Accelerometer_Z));
-  AnglePitchAccel=asin((double)mpu6050DataStr.Accelerometer_Y/Acc_vector)*RADIANSTODEGREES;
-  AngleRollAccel=-asin((double)mpu6050DataStr.Accelerometer_X/Acc_vector)*RADIANSTODEGREES;
-
-  AnglePitchAccel-=ACCELPITCHMANUALOFFSET;
-  AngleRollAccel-=ACCELROLLMANUALOFFSET;
-
-  AnglePitchGyro=AnglePitchAccel;
-  AngleRollGyro=AngleRollAccel;
-  AngleYawGyro=0;*/
+  HAL_Delay(2000);//wait to connect battery
 
   HAL_TIM_PWM_Start(&htim1, TIM_CHANNEL_1);
   HAL_TIM_PWM_Start(&htim1, TIM_CHANNEL_2);
@@ -359,18 +317,6 @@ int main(void)
 	  WriteString(UartTXbuff0);
 
 	  sprintf(UartTXbuff0, "YawIN %.2f \n\r",YawINscaled);
-	  WriteString(UartTXbuff0);
-
-	  sprintf(UartTXbuff0, "\n\r" );
-	  WriteString(UartTXbuff0);
-
-	  sprintf(UartTXbuff0, "Pitch DMP=%.2f \n\r",AnglesMPU6050_DMP.pitch);
-	  WriteString(UartTXbuff0);
-
-	  sprintf(UartTXbuff0, "Roll DMP=%.2f \n\r",AnglesMPU6050_DMP.roll);
-	  WriteString(UartTXbuff0);
-
-	  sprintf(UartTXbuff0, "Yaw DMP=%.2f \n\r",AnglesMPU6050_DMP.yaw);
 	  WriteString(UartTXbuff0);
 
 	  sprintf(UartTXbuff0, "\n\r" );
@@ -486,18 +432,6 @@ int main(void)
 
 	  sprintf(UartTXbuff0, "watch %.2f %.2f %.2f %.2f \n\r",watch1fl,watch2fl,watch3fl,watch4fl);
 	  WriteString(UartTXbuff0);
-
-	  //sprintf(UartTXbuff0, "%d %d %d %d\n\r",fifoBuffer[0],fifoBuffer[1],fifoBuffer[2],fifoBuffer[3]);
-	  //WriteString(UartTXbuff0);
-
-	  //sprintf(UartTXbuff0, "%d %d %d %d\n\r",fifoBuffer[4],fifoBuffer[5],fifoBuffer[6],fifoBuffer[7]);
-	 // WriteString(UartTXbuff0);
-
-	  //sprintf(UartTXbuff0, "%d %d %d %d\n\r",fifoBuffer[8],fifoBuffer[9],fifoBuffer[10],fifoBuffer[11]);
-	 // WriteString(UartTXbuff0);
-
-	 // sprintf(UartTXbuff0, "%d %d %d %d\n\r",fifoBuffer[12],fifoBuffer[13],fifoBuffer[14],fifoBuffer[15]);
-	 // WriteString(UartTXbuff0);
 
   }
   /* USER CODE END 3 */
@@ -862,7 +796,7 @@ static void MX_GPIO_Init(void)
 
   /*Configure GPIO pin : MPU6050_INT_Pin */
   GPIO_InitStruct.Pin = MPU6050_INT_Pin;
-  GPIO_InitStruct.Mode = GPIO_MODE_IT_RISING;
+  GPIO_InitStruct.Mode = GPIO_MODE_INPUT;
   GPIO_InitStruct.Pull = GPIO_NOPULL;
   HAL_GPIO_Init(MPU6050_INT_GPIO_Port, &GPIO_InitStruct);
 
@@ -892,10 +826,6 @@ static void MX_GPIO_Init(void)
   GPIO_InitStruct.Pull = GPIO_NOPULL;
   GPIO_InitStruct.Speed = GPIO_SPEED_FREQ_HIGH;
   HAL_GPIO_Init(TEST1_PIN_GPIO_Port, &GPIO_InitStruct);
-
-  /* EXTI interrupt init*/
-  HAL_NVIC_SetPriority(EXTI0_IRQn, 0, 0);
-  HAL_NVIC_EnableIRQ(EXTI0_IRQn);
 
 }
 

@@ -218,38 +218,10 @@ void MPU6050_gyroread(I2C_HandleTypeDef* I2Cx, MPU6050str* DataStruct)
 
 void MPU6050_init(I2C_HandleTypeDef* I2Cx)
 {
-	//OLD BASIC INIT////
-	/*uint8_t data=0; //wake sensor, clk=8Mhz(internal)
-	HAL_I2C_Mem_Write(I2Cx, MPU6050_ADDRESS, MPU6050_RA_PWR_MGMT_1, 1,&data, 1, 1000);
-
-	//Set sample rate
-	data=7;//set to 1khz sample rate
-	HAL_I2C_Mem_Write(I2Cx, MPU6050_ADDRESS, MPU6050_RA_SMPLRT_DIV, 1,&data, 1, 1000);
-
-	//GYRO CONFIG REGISTER  8bit
-	//XG_ST(self test)... YG_ST(self test)...ZG_ST(selft test)... FS_SEL(2bits)...empty bit...empty bit...empty bit
-	//FS_SEL 0 +-250deg/s  1 +-500deg/s  2  +-1000deg/s   3 +-2000 deg/s
-	data=2<<3;//Set ± 1000 °/s
-	HAL_I2C_Mem_Write(I2Cx, MPU6050_ADDRESS, MPU6050_RA_GYRO_CONFIG, 1,&data, 1, 1000);
-
-	//ACCEL CONFIG REGISTER  8bit
-	//XA_ST(self test)...YA_ST(Self test)...ZA_ST(self test)...FS_SEL(2bits)...empty bit...empty bit...empty bit
-	//FS_SEL 0 +-2g, 1 +-4g,  2 +-8g,  3 +-16g
-	data=2<<3;//Set +-8g
-	HAL_I2C_Mem_Write(I2Cx, MPU6050_ADDRESS, MPU6050_RA_ACCEL_CONFIG, 1,&data, 1, 1000);*/
-
-
-	//OLD init in new format
-	//MPU6050_Set_CLK_Source(I2Cx,MPU6050_ADDRESS,MPU6050_CLOCK_INTERNAL);
-	//MPU6050_SetSleepEnabled(I2Cx,MPU6050_ADDRESS,0); //must be before GyroRange,AccelRange or it's NOT SET!
-	//MPU6050_SetRate(I2Cx,MPU6050_ADDRESS, 7);//8khz(1+7) WITH DLPF DISABLED
-	//MPU6050_SetGyroRange(I2Cx,MPU6050_ADDRESS, MPU6050_GYRO_FS_1000);
-	//MPU6050_SetAccelRange(I2Cx,MPU6050_ADDRESS, MPU6050_ACCEL_FS_8);
-
-	//example init with DMP later
+	//example simple init
 	MPU6050_Set_CLK_Source(I2Cx,MPU6050_ADDRESS,MPU6050_CLOCK_PLL_XGYRO);
 	MPU6050_SetSleepEnabled(I2Cx,MPU6050_ADDRESS,0);
-	MPU6050_SetGyroRange(I2Cx,MPU6050_ADDRESS, MPU6050_GYRO_FS_250);
+	MPU6050_SetGyroRange(I2Cx,MPU6050_ADDRESS, MPU6050_GYRO_FS_1000);
 	MPU6050_SetAccelRange(I2Cx,MPU6050_ADDRESS, MPU6050_ACCEL_FS_2);
 }
 
@@ -447,47 +419,25 @@ uint8_t MPU6050_GetIntStatus(I2C_HandleTypeDef* I2Cx, uint8_t DeviceAddress)
 uint32_t MPU6050_GetCurrentFIFOPacket(I2C_HandleTypeDef* I2Cx, uint8_t DeviceAddress,uint8_t *data,uint8_t length)
 {
     int16_t fifoC;
-    // This section of code is for when we allowed more than 1 packet to be acquired
-    uint32_t BreakTimer = DWT->CYCCNT;
-    do {
-        	if ((fifoC = MPU6050_GetFifoCount(I2Cx, DeviceAddress))  > length)
-        	{
-        		if (fifoC > 200)
-        		{ // if you waited to get the FIFO buffer to > 200 bytes it will take longer to get the last packet in the FIFO Buffer than it will take to  reset the buffer and wait for the next to arrive
-        			MPU6050_ResetFIFO(I2Cx,MPU6050_ADDRESS); //reset FIFO Fixes any overflow corruption
-        			fifoC = 0;
 
-        			while (!(fifoC = MPU6050_GetFifoCount(I2Cx, DeviceAddress)) && ((DWT->CYCCNT - BreakTimer) <= (720000))); // Get Next New Packet
-                }
+    fifoC = MPU6050_GetFifoCount(I2Cx, DeviceAddress);
 
-        		else
-                {
-        			//We have more than 1 packet but less than 200 bytes of data in the FIFO Buffer
-        			uint8_t Trash[BUFFER_LENGTH];
+    if(!fifoC)//No data in FIFO
+    {
+    	return 0;
+    }
 
-        			while ((fifoC = MPU6050_GetFifoCount(I2Cx, DeviceAddress)) > length)
-        			{
-        				// Test each time just in case the MPU is writing to the FIFO Buffer
-        				fifoC = fifoC - length; // Save the last packet
-        				uint16_t  RemoveBytes;
+    if(fifoC > length)//reset Buffer, more than expected 42 packets clr buffer read in next cycle
+    {
+    	MPU6050_ResetFIFO(I2Cx,MPU6050_ADDRESS);
+    	return 0;
+    }
 
-        				while (fifoC)
-        				{ 	// fifo count will reach zero so this is safe
-        					RemoveBytes = min((int)fifoC, BUFFER_LENGTH); // Buffer Length is different than the packet length this will efficiently clear the buffer
-        					MPU6050_GetFifoBytes(I2Cx, DeviceAddress, Trash, (uint8_t)RemoveBytes);
-        					fifoC -= RemoveBytes;
-        				}
-        			}
-                }
-        }
-        if (!fifoC){return 0;} // Called too early no data or we timed out after FIFO Reset
-        // We have 1 packet
-        if ((DWT->CYCCNT - BreakTimer) > (72000)) {return 0;}  //100us delay 72Mhz 72counts prer 1us
-
-    }while (fifoC != length);
-    MPU6050_GetFifoBytes(I2Cx, DeviceAddress,data, length); //Get 1 packet
-
-    return 1;
+    else //read expected 42 bytes
+    {
+    	MPU6050_GetFifoBytes(I2Cx, DeviceAddress,data, length);
+    	return 1;
+    }
 }
 
 uint8_t MPU6050_WriteMemoryBlock(I2C_HandleTypeDef* I2Cx, uint8_t DeviceAddress,const uint8_t *data, uint16_t dataSize, uint8_t bank, uint8_t address,uint8_t verify, uint8_t useProgMem)
@@ -587,13 +537,15 @@ uint8_t MPU6050_DMP_Init(I2C_HandleTypeDef* I2Cx)
 	MPU6050_Set_CLK_Source(I2Cx,MPU6050_ADDRESS,MPU6050_CLOCK_PLL_ZGYRO);
 	MPU6050_SetIntEnabled(I2Cx,MPU6050_ADDRESS,1<<MPU6050_INTERRUPT_FIFO_OFLOW_BIT|1<<MPU6050_INTERRUPT_DMP_INT_BIT);
 
-	MPU6050_SetRate(I2Cx,MPU6050_ADDRESS, 4);//Set rate to 200Hz   1Khz / (1+4)
+	MPU6050_SetRate(I2Cx,MPU6050_ADDRESS, 39);// if GYRO clk 1khz (depends on BW setting) 1Khz / (1+4)=200hZ  ,, else 8kHz /(39+1)=200hZ
 
 	SetExternalFrameSync(I2Cx,MPU6050_ADDRESS, MPU6050_EXT_SYNC_TEMP_OUT_L);
 
-	SetDLPFMode(I2Cx,MPU6050_ADDRESS, MPU6050_DLPF_BW_42);
+	SetDLPFMode(I2Cx,MPU6050_ADDRESS, MPU6050_DLPF_BW_256);
 
-	MPU6050_SetGyroRange(I2Cx,MPU6050_ADDRESS, MPU6050_GYRO_FS_2000); //Gyro range +/- 2000 deg/sec
+	MPU6050_SetGyroRange(I2Cx,MPU6050_ADDRESS, MPU6050_GYRO_FS_2000); //Gyro range
+
+	//MPU6050_SetAccelRange(I2Cx,MPU6050_ADDRESS, MPU6050_ACCEL_FS_2); //+-8g
 
 	//Load DMP Code in Memory Bank
 	MPU6050_WriteMemoryBlock(I2Cx,MPU6050_ADDRESS,dmpMemory, MPU6050_DMP_CODE_SIZE, 0, 0,1,0);

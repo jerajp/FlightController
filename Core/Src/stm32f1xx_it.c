@@ -286,47 +286,6 @@ void SysTick_Handler(void)
 /******************************************************************************/
 
 /**
-  * @brief This function handles EXTI line0 interrupt.
-  */
-void EXTI0_IRQHandler(void)
-{
-  /* USER CODE BEGIN EXTI0_IRQn 0 */
-
-  /* USER CODE END EXTI0_IRQn 0 */
-  HAL_GPIO_EXTI_IRQHandler(GPIO_PIN_0);
-  /* USER CODE BEGIN EXTI0_IRQn 1 */
-
-  watch1++;
-  //MPU6050_GetFifoBytes(&hi2c2,MPU6050_ADDRESS,dataTEST,100);
-  //MPU6050_GetFifoCount(&hi2c2,MPU6050_ADDRESS);
-
-  //watch1=dataTEST[0];
-  //watch2=dataTEST[1];
-  //watch3=dataTEST[2];
-  //watch4=dataTEST[3];
-  //watch5=dataTEST[4];
-  //watch6=dataTEST[5];
-  MPU6050_GetCurrentFIFOPacket(&hi2c2,MPU6050_ADDRESS,fifoBuffer,packetSize);
-  CalculateQuaternions(&QuaternionMPU60500,fifoBuffer);
-  CalculateGravityVector(&QuaternionMPU60500, &GravityVectorMPU6050);
-  CalculateYawPitchRoll(&QuaternionMPU60500, &GravityVectorMPU6050,&AnglesMPU6050_DMP);
-  watch1fl=QuaternionMPU60500.w;
-  watch2fl=QuaternionMPU60500.x;
-  watch3fl=QuaternionMPU60500.y;
-  watch4fl=QuaternionMPU60500.z;
-
-  //Testing
-  //MPU6050_GetFIFOEnableStatus(&hi2c2,MPU6050_ADDRESS); JE aktiviran!
-  //MPU6050_FifoOvreflowStatus(&hi2c2,MPU6050_ADDRESS);
-  //MPU6050_GetFifoCount(&hi2c2,MPU6050_ADDRESS);
-  //MPU6050_ResetFIFO(&hi2c2,MPU6050_ADDRESS); //reset FIFO
-  //MPU6050_GetIntStatus(&hi2c2,MPU6050_ADDRESS); //ko preberes se pobrise, ce 2x beres je drugic 0, prvic je 3
-
-
-  /* USER CODE END EXTI0_IRQn 1 */
-}
-
-/**
   * @brief This function handles TIM2 global interrupt.
   */
 void TIM2_IRQHandler(void)
@@ -337,6 +296,8 @@ void TIM2_IRQHandler(void)
   HAL_TIM_IRQHandler(&htim2);
   /* USER CODE BEGIN TIM2_IRQn 1 */
 
+  HAL_GPIO_WritePin(TEST1_PIN_GPIO_Port,TEST1_PIN_Pin,GPIO_PIN_SET);
+
   //blinky
   LEDcount++;
   if(LEDcount>=250)
@@ -345,7 +306,7 @@ void TIM2_IRQHandler(void)
 	  HAL_GPIO_TogglePin(LED1_GPIO_Port,LED1_Pin);
   }
 
-  HAL_GPIO_WritePin(TEST1_PIN_GPIO_Port,TEST1_PIN_Pin,GPIO_PIN_SET);
+
 
   //Read Battery Voltage-----------------------------------------------
   HAL_ADC_PollForConversion(&hadc1,10);
@@ -636,63 +597,16 @@ void TIM2_IRQHandler(void)
     		MSGcount=0;
     		LoopCounter=0;
   }//-----------------------------------------------------------------
+
   //MPU 6050-----------------------------------------------------------
-  //MPUintActive=HAL_GPIO_ReadPin(MPU6050_INT_GPIO_Port,MPU6050_INT_Pin);
-  //if(MPUintActive)
-  //{
-	  //MPU6050_GetCurrentFIFOPacket(&hi2c2,MPU6050_ADDRESS,fifoBuffer,packetSize);
-	  //CalculateQuaternions(&QuaternionMPU60500,fifoBuffer);
-	  //CalculateGravityVector(&QuaternionMPU60500, &GravityVectorMPU6050);
-	  //CalculateYawPitchRoll(&QuaternionMPU60500, &GravityVectorMPU6050,&AnglesMPU6050_DMP);
-  //}
+  MPU6050_GetCurrentFIFOPacket(&hi2c2,MPU6050_ADDRESS,fifoBuffer,packetSize);
+  CalculateQuaternions(&QuaternionMPU60500,fifoBuffer);
+  CalculateGravityVector(&QuaternionMPU60500, &GravityVectorMPU6050);
+  CalculateYawPitchRoll(&QuaternionMPU60500, &GravityVectorMPU6050,&AnglesMPU6050_DMP);
 
-  //MPU6050_accread(&hi2c2,&mpu6050DataStr);
-  //MPU6050_gyroread(&hi2c2,&mpu6050DataStr);
-
-/*  if(mpu6050DataStr.Accelerometer_X < 0 )temp_ACC_X=-mpu6050DataStr.Accelerometer_X;
-  else temp_ACC_X=mpu6050DataStr.Accelerometer_X;
-  if(mpu6050DataStr.Accelerometer_Y < 0 )temp_ACC_Y=-mpu6050DataStr.Accelerometer_Y;
-  else temp_ACC_Y=mpu6050DataStr.Accelerometer_Y;
-  if(mpu6050DataStr.Accelerometer_Z < 0 )temp_ACC_Z=-mpu6050DataStr.Accelerometer_Z;
-  else temp_ACC_Z=mpu6050DataStr.Accelerometer_Z;
-  if(mpu6050DataStr.Gyroscope_X < 0 )temp_GYR_X=-mpu6050DataStr.Gyroscope_X;
-  else temp_GYR_X=mpu6050DataStr.Gyroscope_X;
-  if(mpu6050DataStr.Gyroscope_Y < 0 )temp_GYR_Y=-mpu6050DataStr.Gyroscope_Y;
-  else temp_GYR_Y=mpu6050DataStr.Gyroscope_Y;
-  if(mpu6050DataStr.Gyroscope_Z < 0 )temp_GYR_Z=-mpu6050DataStr.Gyroscope_Z;
-  else temp_GYR_Z=mpu6050DataStr.Gyroscope_Z;
-
-  if(temp_ACC_X > 16000)watch1++;
-  if(temp_ACC_Y > 16000)watch2++;
-  if(temp_ACC_Z > 16000)watch3++;
-  if(temp_GYR_X > 16000)watch4++;
-  if(temp_GYR_Y > 16000)watch5++;
-  if(temp_GYR_Z > 16000)watch6++;*/
-
-  GyroXcal=mpu6050DataStr.Gyroscope_X - GyroXOff;
-  GyroYcal=mpu6050DataStr.Gyroscope_Y - GyroYOff;
-  GyroZcal=mpu6050DataStr.Gyroscope_Z - GyroZOff;
-
-  AnglePitchGyro+=GyroXcal*GYROFACTORANGLE;
-  AngleRollGyro+=GyroYcal*GYROFACTORANGLE;
-  AngleYawGyro+=GyroZcal*GYROFACTORANGLE;
-
-  //correct angles with jaw axis correction
-  AnglePitchGyro+=AngleRollGyro * sin((double)(GyroZcal) * DEGREESTORADIANS * GYROFACTORANGLE);
-  AngleRollGyro-=AnglePitchGyro * sin((double)(GyroZcal) * DEGREESTORADIANS * GYROFACTORANGLE);
-
-  //Accelerometer angles
-  Acc_vector=sqrt((mpu6050DataStr.Accelerometer_X * mpu6050DataStr.Accelerometer_X)+(mpu6050DataStr.Accelerometer_Y * mpu6050DataStr.Accelerometer_Y)+(mpu6050DataStr.Accelerometer_Z * mpu6050DataStr.Accelerometer_Z));
-  AnglePitchAccel=asin((double)mpu6050DataStr.Accelerometer_Y/Acc_vector)*RADIANSTODEGREES;
-  AngleRollAccel=-asin((double)mpu6050DataStr.Accelerometer_X/Acc_vector)*RADIANSTODEGREES;
-
-
-  AnglePitchAccel-=ACCELPITCHMANUALOFFSET;
-  AngleRollAccel-=ACCELROLLMANUALOFFSET;
-
-  AnglePitch=AnglePitchGyro;// + 0.01*AnglePitchAccel;
-  AngleRoll=AngleRollGyro; //+ *AngleRollAccel;
-  AngleYaw=AngleYawGyro;
+  AnglePitch=AnglesMPU6050_DMP.pitch;
+  AngleRoll=AnglesMPU6050_DMP.roll;
+  AngleYaw=AnglesMPU6050_DMP.yaw;
 
   //PID input Filtered
   PitchGyroPIDin =  (PitchGyroPIDin * 0.7) + (AnglePitch * 0.3);
