@@ -56,6 +56,16 @@ extern "C" {
 #define MOTORSTARTING 	2
 #define MOTORRUNNING	3
 
+//DMP ABSOULUTE DEGREES OFFSET
+#define PITCHDMPOFFSET (float) (-0.1)
+#define ROLLDMPOFFSET  (float) (-2.9)
+#define YAWDMPOFFSET  (float) (-45.3)
+
+//GYRO OFFSET
+#define OFFSETGYROROLL (int16_t) (-9)
+#define OFFSETGYROPITCH (int16_t) (-37)
+#define OFFSETGYROYAW (int16_t) (-2)
+
 //WIfi message type selector
 #define COMMCONTROLDATA 	0  //normal control data
 #define COMMPARAMACTIVE		1  //Param Send to Drone ->MSG saves in Active Structure - And Drone Returns Value
@@ -75,19 +85,25 @@ extern "C" {
 #define T_SHOW_CUR      "\33[?25h"
 #define T_HIDE_CUR      "\33[?25l"
 
-#define GYROFACTORANGLE (double)( (1) / (32.8 * 500) )  // [deg]   units 2ms loop 500 readings per second
-#define GYROFACTORANGLEDEG (double)( 1 / 32.8 )  	   // [deg/s] units 65.5 factor-from gyro set-up
-#define DEGREESTORADIANS (double)( 0.017453292 )  //conversion factor from degrees to radians
-#define RADIANSTODEGREES (double)(57.2957795)
-#define ACCELPITCHMANUALOFFSET (double)(0.2)		//spirit level offset in degrees
-#define ACCELROLLMANUALOFFSET (double)(0.5)		//spirit level offset in degrees
+
+#define DEGREESTORADIANS (float)( 0.017453292 )
+#define RADIANSTODEGREES (float)(57.2957795)
+
+
 #define GYROCALIBVALUES 1000
 
 //MPU6050
-#define ACCELCONSTANT (float)(16384.0)  //uncomment for AFS_SEL=0 (+-2G) used in DMP algorithm
-//#define ACCELCONSTANT (float)(8192.0)  //uncomment for AFS_SEL=1 (+-4G) used in DMP algorithm
-//#define ACCELCONSTANT (float)(4096.0)  //uncomment for AFS_SEL=2 (+-8G) used in DMP algorithm
-//#define ACCELCONSTANT (float)(2048.0)  //uncomment for AFS_SEL=3 (+-16G) used in DMP algorithm
+#define ACCELCONSTANT (float)(16384.0)  //uncomment for AFS_SEL=0 (+-2G) used in init procedure
+//#define ACCELCONSTANT (float)(8192.0)  //uncomment for AFS_SEL=1 (+-4G) used in init procedure
+//#define ACCELCONSTANT (float)(4096.0)  //uncomment for AFS_SEL=2 (+-8G) used in init procedure
+//#define ACCELCONSTANT (float)(2048.0)  //uncomment for AFS_SEL=3 (+-16G) used in init procedure
+
+//#define GYROCONSTANT (float)(131.0)  //uncomment for FS_SEL=0 (+-250) used in init procedure
+//#define GYROCONSTANT (float)(65.5)  //uncomment for FS_SEL=1 (+-500) used in init procedure
+//#define GYROCONSTANT (float)(32.8)  //uncomment for FS_SEL=2 (+-1000) used in init procedure
+#define GYROCONSTANT (float)(16.4)  //uncomment for FS_SEL=3 (+-2000) used in init procedure
+
+
 
 //SAFETY THROTTLE CHECK AT STARTUP
 #define MOTORSTARTBLOCKTHRESHOLD	200  //max throttle stick position to allow start

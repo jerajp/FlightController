@@ -180,18 +180,18 @@ int main(void)
   FlashDataDefault.pid_p_gain_roll=5.0;
   FlashDataDefault.pid_i_gain_roll=0.001;
   FlashDataDefault.pid_d_gain_roll=500.0;
-  FlashDataDefault.pid_p_gain_yaw=4;
-  FlashDataDefault.pid_i_gain_yaw=0;
-  FlashDataDefault.pid_d_gain_yaw=0;
+  FlashDataDefault.pid_p_gain_yaw=5;
+  FlashDataDefault.pid_i_gain_yaw=0.001;
+  FlashDataDefault.pid_d_gain_yaw=500.0;
   FlashDataDefault.pid_max_pitch = 400;
   FlashDataDefault.pid_i_max_pitch = 100;
   FlashDataDefault.pid_max_roll = 400;
   FlashDataDefault.pid_i_max_roll = 100;
-  FlashDataDefault.pid_max_yaw = 0;
-  FlashDataDefault.pid_i_max_yaw = 0;
+  FlashDataDefault.pid_max_yaw = 400;
+  FlashDataDefault.pid_i_max_yaw = 100;
   FlashDataDefault.maxpitchdegree=20; //degrees
   FlashDataDefault.maxrolldegree=20;  //degrees
-  FlashDataDefault.maxyawdegree=180;  //degrees
+  FlashDataDefault.maxyawdegree=30;  //degrees per second rotation
   FlashDataDefault.minthrottle=80;    //80counts of 1000 to spin rotors
   FlashDataDefault.maxthrottle=800;   //800counts of 1000 (80%)
 
@@ -322,23 +322,39 @@ int main(void)
 	  sprintf(UartTXbuff0, "\n\r" );
 	  WriteString(UartTXbuff0);
 
-	  sprintf(UartTXbuff0, "Pitch=%.2f \n\r",AnglePitch);
+	  sprintf(UartTXbuff0, "Pitch=%.2f deg\n\r",AnglePitch);
 	  WriteString(UartTXbuff0);
 
-	  sprintf(UartTXbuff0, "Roll=%.2f \n\r",AngleRoll);
+	  sprintf(UartTXbuff0, "Roll=%.2f deg\n\r",AngleRoll);
 	  WriteString(UartTXbuff0);
 
-	  sprintf(UartTXbuff0, "Yaw=%.2f \n\r",AngleYaw);
+	  sprintf(UartTXbuff0, "Yaw=%.2f deg/s\n\r",SpeedAngleYaw);
 	  WriteString(UartTXbuff0);
 
-	  sprintf(UartTXbuff0, "Pitch ACC=%.2f GYRO=%.2f\n\r",AnglePitchAccel,AnglePitchGyro);
+	  sprintf(UartTXbuff0, "PID inputs\n\r",SpeedAngleRoll);
 	  WriteString(UartTXbuff0);
 
-	  sprintf(UartTXbuff0, "Roll ACC=%.2f GYRO=%.2f\n\r",AngleRollAccel,AngleRollGyro);
+	  sprintf(UartTXbuff0, "Pitch=%.2f deg\n\r",PitchPIDin);
 	  WriteString(UartTXbuff0);
 
-	  sprintf(UartTXbuff0, "Yaw GYRO=%.2f\n\r",AngleYawGyro);
+	  sprintf(UartTXbuff0, "Roll=%.2f deg\n\r",RollPIDin);
 	  WriteString(UartTXbuff0);
+
+	  sprintf(UartTXbuff0, "Yaw=%.2f deg/s\n\r",YawPIDin);
+	  WriteString(UartTXbuff0);
+
+	  sprintf(UartTXbuff0, "\n\r" );
+	  WriteString(UartTXbuff0);
+
+	  sprintf(UartTXbuff0, "Pitch=%.2f deg/s\n\r",SpeedAnglePitch);
+	  WriteString(UartTXbuff0);
+
+	  sprintf(UartTXbuff0, "Roll=%.2f deg/s\n\r",SpeedAngleRoll);
+	  WriteString(UartTXbuff0);
+
+	  sprintf(UartTXbuff0, "GYRO RAW x=%d y=%d z=%d \n\r",mpu6050DataStr.Gyroscope_X,mpu6050DataStr.Gyroscope_Y,mpu6050DataStr.Gyroscope_Z);
+	  WriteString(UartTXbuff0);
+
 
 	  sprintf(UartTXbuff0, "\n\r" );
 	  WriteString(UartTXbuff0);

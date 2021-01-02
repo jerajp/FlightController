@@ -84,28 +84,35 @@ uint32_t FlashEraseTimeoutCount;
 uint32_t Gyrocalibcount=0;
 uint8_t AnglePitchDIR,AngleRollDIR;		//+- direction of angles for NRF24 sending
 uint8_t AngleRollNRF24,AnglePitchNRF24; //positive angles for NRF24 sending
-double AnglePitch, AnglePitchGyro,AnglePitchAccel;
-double AngleRoll, AngleRollGyro, AngleRollAccel;
-double AngleYaw, AngleYawGyro;
+float AnglePitch;
+float AngleRoll;
+float SpeedAnglePitch;
+float SpeedAngleRoll;
+float SpeedAngleYaw;
 
-double Acc_vector;
-uint8_t StartupAngleSet=0;
+//AngularSpeeds not calibrated
+float gyroXDegperSecond;
+float gyroYDegperSecond;
+float gyroZDegperSecond;
 
-//SCALED INPUTS
-float ThrottleINscaled=0;
-float PitchINscaled=0;
-float RollINscaled=0;
-float YawINscaled=0;
 
-float PitchGyroPIDin=0;
-float RollGyroPIDin=0;
-float YawGyroPIDin=0;
+//reference INPUTS
+float ThrottleINscaled;
+float PitchINscaled;
+float RollINscaled;
+float YawINscaled;
 
-//PID
-float pid_output_pitch=0;
-float pid_output_roll=0;
-float pid_output_yaw=0;
+//PID input
+float PitchPIDin;
+float RollPIDin;
+float YawPIDin;
 
+//PID output
+float PitchPIDout;
+float RollPIDout;
+float YawPIDout;
+
+//PID variables
 float pitch_integral=0;
 float pitch_diffErrHist=0;
 float roll_integral=0;
@@ -121,12 +128,6 @@ uint32_t togg5hist;
 uint32_t togg4hist;
 uint32_t togg6hist;
 
-uint16_t temp_ACC_X;
-uint16_t temp_ACC_Y;
-uint16_t temp_ACC_Z;
-uint16_t temp_GYR_X;
-uint16_t temp_GYR_Y;
-uint16_t temp_GYR_Z;
 
 
 uint8_t dataTEST[200];
@@ -604,14 +605,27 @@ void TIM2_IRQHandler(void)
   CalculateGravityVector(&QuaternionMPU60500, &GravityVectorMPU6050);
   CalculateYawPitchRoll(&QuaternionMPU60500, &GravityVectorMPU6050,&AnglesMPU6050_DMP);
 
+  //Get Gyro registers
+  MPU6050_gyroread(&hi2c2,&mpu6050DataStr);
+  //Calculate angular velocity
+  gyroXDegperSecond=(float)(mpu6050DataStr.Gyroscope_X-OFFSETGYROROLL)/GYROCONSTANT;
+  gyroYDegperSecond=(float)(mpu6050DataStr.Gyroscope_Y-OFFSETGYROPITCH)/GYROCONSTANT;
+  gyroZDegperSecond=(float)(mpu6050DataStr.Gyroscope_Z-OFFSETGYROYAW)/GYROCONSTANT;
+
+  //Pitch Roll Absolute Angle from DMP
   AnglePitch=AnglesMPU6050_DMP.pitch;
   AngleRoll=AnglesMPU6050_DMP.roll;
-  AngleYaw=AnglesMPU6050_DMP.yaw;
+
+  //Yaw Angular velocity from Gyro
+  SpeedAngleYaw=-gyroZDegperSecond;  // rotation in left is negative
+  SpeedAnglePitch=gyroXDegperSecond; //only debug not used in regulation
+  SpeedAngleRoll=gyroYDegperSecond;  //only debug not used in regulation
+
 
   //PID input Filtered
-  PitchGyroPIDin =  (PitchGyroPIDin * 0.7) + (AnglePitch * 0.3);
-  RollGyroPIDin = (RollGyroPIDin * 0.7) + (AngleRoll * 0.3);
-  YawGyroPIDin = (YawGyroPIDin * 0.7) + (AngleYaw * 0.3);
+  PitchPIDin =  (PitchPIDin * 0.95) + (AnglePitch * 0.05);
+  RollPIDin = (RollPIDin * 0.95) + (AngleRoll * 0.05);
+  YawPIDin = (YawPIDin * 0.95) + (SpeedAngleYaw * 0.05);
   //-------------------------------------------------------------------
 
   //SCALE DATA
@@ -626,15 +640,15 @@ void TIM2_IRQHandler(void)
   //Roll LEFT->RIGHT 0 -> 100 -> scaling
   RollINscaled=ScaleDataFl(Djoyleftright,0,100,-FlashDataActive.maxrolldegree,FlashDataActive.maxrolldegree);
 
-  //Roll LEFT->RIGHT 0 -> 100 ->scaling
+  //YAW angular speed of rotation degrees/second
   YawINscaled=ScaleDataFl(Ljoyleftright,0,100,-FlashDataActive.maxyawdegree,FlashDataActive.maxyawdegree);
 
   //MOTOR CONTROL
 
   //PID
-  pid_output_pitch = pid(PitchINscaled, PitchGyroPIDin, FlashDataActive.pid_p_gain_pitch, FlashDataActive.pid_i_gain_pitch, FlashDataActive.pid_d_gain_pitch, &pitch_integral, &pitch_diffErrHist, FlashDataActive.pid_i_max_pitch, FlashDataActive.pid_max_pitch);
-  pid_output_roll = pid(RollINscaled, RollGyroPIDin, FlashDataActive.pid_p_gain_roll, FlashDataActive.pid_i_gain_roll, FlashDataActive.pid_d_gain_roll,&roll_integral,&roll_diffErrHist,FlashDataActive.pid_i_max_roll, FlashDataActive.pid_max_roll );
-  pid_output_yaw = pid(YawINscaled, YawGyroPIDin, FlashDataActive.pid_p_gain_yaw, FlashDataActive.pid_i_gain_yaw, FlashDataActive.pid_d_gain_yaw, &yaw_integral,&yaw_diffErrHist,FlashDataActive.pid_i_max_roll, FlashDataActive.pid_max_yaw );
+  PitchPIDout = pid(PitchINscaled, PitchPIDin, FlashDataActive.pid_p_gain_pitch, FlashDataActive.pid_i_gain_pitch, FlashDataActive.pid_d_gain_pitch, &pitch_integral, &pitch_diffErrHist, FlashDataActive.pid_i_max_pitch, FlashDataActive.pid_max_pitch);
+  RollPIDout = pid(RollINscaled, RollPIDin, FlashDataActive.pid_p_gain_roll, FlashDataActive.pid_i_gain_roll, FlashDataActive.pid_d_gain_roll,&roll_integral,&roll_diffErrHist,FlashDataActive.pid_i_max_roll, FlashDataActive.pid_max_roll );
+  YawPIDout = pid(YawINscaled, YawPIDin, FlashDataActive.pid_p_gain_yaw, FlashDataActive.pid_i_gain_yaw, FlashDataActive.pid_d_gain_yaw, &yaw_integral,&yaw_diffErrHist,FlashDataActive.pid_i_max_roll, FlashDataActive.pid_max_yaw );
 
   //TESTING
   if(ConnectWeakFlag==1)MotorStatus=MOTOROFF;//if connection is lost!
@@ -679,31 +693,12 @@ void TIM2_IRQHandler(void)
 
   if(GyroCalibStatus==1)
   {
-	  SUMGyroX+=mpu6050DataStr.Gyroscope_X;
-	  SUMGyroY+=mpu6050DataStr.Gyroscope_Y;
-	  SUMGyroZ+=mpu6050DataStr.Gyroscope_Z;
-	  Gyrocalibcount++;
+	 GyroCalibStatus=0;
 
-	  if(Gyrocalibcount==GYROCALIBVALUES)
-	  {
-
-		  GyroXOff=SUMGyroX/GYROCALIBVALUES;
-		  GyroYOff=SUMGyroY/GYROCALIBVALUES;
-		  GyroZOff=SUMGyroZ/GYROCALIBVALUES;
-
-		  //startup angles Accel to Gyro transfer
-		  AnglePitchGyro=AnglePitchAccel;
-		  AngleRollGyro=AngleRollAccel;
-
-		  GyroCalibStatus=0;
-	  }
   }//--------------------------------------------------------------------------------------------------
 
   if(MotorStatus==MOTORSTARTING)
   {
-	  //startup angles Accel to Gyro transfer
-	  AnglePitchGyro=AnglePitchAccel;
-	  AngleRollGyro=AngleRollAccel;
 
 	  if(GyroCalibStatus==0)//only if calib is finished allow transition
 	  MotorStatus=MOTORRUNNING;
@@ -717,10 +712,10 @@ void TIM2_IRQHandler(void)
   {
   	  case MOTORRUNNING:
   	  	  	  {
-  	  	  		  PWM_Mot1=1000 + ThrottleINscaled  - pid_output_pitch - pid_output_roll + pid_output_yaw;
-  	  		  	  PWM_Mot2=1000 + ThrottleINscaled  - pid_output_pitch + pid_output_roll - pid_output_yaw;
-  	  		  	  PWM_Mot3=1000 + ThrottleINscaled  + pid_output_pitch + pid_output_roll + pid_output_yaw;
-  	  		  	  PWM_Mot4=1000 + ThrottleINscaled  + pid_output_pitch - pid_output_roll - pid_output_yaw;
+  	  	  		  PWM_Mot1=1000 + ThrottleINscaled  - PitchPIDout - RollPIDout + YawPIDout;
+  	  		  	  PWM_Mot2=1000 + ThrottleINscaled  - PitchPIDout + RollPIDout - YawPIDout;
+  	  		  	  PWM_Mot3=1000 + ThrottleINscaled  + PitchPIDout + RollPIDout + YawPIDout;
+  	  		  	  PWM_Mot4=1000 + ThrottleINscaled  + PitchPIDout - RollPIDout - YawPIDout;
 
   	  		  	  //MIN OBRATI
   	  		  	  if(PWM_Mot1 < (1000+ FlashDataActive.minthrottle))PWM_Mot1=(1000+ FlashDataActive.minthrottle);

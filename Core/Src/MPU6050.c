@@ -221,7 +221,7 @@ void MPU6050_init(I2C_HandleTypeDef* I2Cx)
 	//example simple init
 	MPU6050_Set_CLK_Source(I2Cx,MPU6050_ADDRESS,MPU6050_CLOCK_PLL_XGYRO);
 	MPU6050_SetSleepEnabled(I2Cx,MPU6050_ADDRESS,0);
-	MPU6050_SetGyroRange(I2Cx,MPU6050_ADDRESS, MPU6050_GYRO_FS_1000);
+	MPU6050_SetGyroRange(I2Cx,MPU6050_ADDRESS, MPU6050_GYRO_FS_250);
 	MPU6050_SetAccelRange(I2Cx,MPU6050_ADDRESS, MPU6050_ACCEL_FS_2);
 }
 
@@ -537,15 +537,15 @@ uint8_t MPU6050_DMP_Init(I2C_HandleTypeDef* I2Cx)
 	MPU6050_Set_CLK_Source(I2Cx,MPU6050_ADDRESS,MPU6050_CLOCK_PLL_ZGYRO);
 	MPU6050_SetIntEnabled(I2Cx,MPU6050_ADDRESS,1<<MPU6050_INTERRUPT_FIFO_OFLOW_BIT|1<<MPU6050_INTERRUPT_DMP_INT_BIT);
 
-	MPU6050_SetRate(I2Cx,MPU6050_ADDRESS, 39);// if GYRO clk 1khz (depends on BW setting) 1Khz / (1+4)=200hZ  ,, else 8kHz /(39+1)=200hZ
+	MPU6050_SetRate(I2Cx,MPU6050_ADDRESS, 4);// if GYRO clk 1khz (depends on BW setting) 1Khz / (1+4)=200hZ  ,, else 8kHz /(39+1)=200hZ
 
 	SetExternalFrameSync(I2Cx,MPU6050_ADDRESS, MPU6050_EXT_SYNC_TEMP_OUT_L);
 
-	SetDLPFMode(I2Cx,MPU6050_ADDRESS, MPU6050_DLPF_BW_256);
+	SetDLPFMode(I2Cx,MPU6050_ADDRESS, MPU6050_DLPF_BW_42);
 
-	MPU6050_SetGyroRange(I2Cx,MPU6050_ADDRESS, MPU6050_GYRO_FS_2000); //Gyro range
+	MPU6050_SetGyroRange(I2Cx,MPU6050_ADDRESS, MPU6050_GYRO_FS_2000); //must be full range or DMP overcompensates on fast movements !!!!
 
-	//MPU6050_SetAccelRange(I2Cx,MPU6050_ADDRESS, MPU6050_ACCEL_FS_2); //+-8g
+	//MPU6050_SetAccelRange(I2Cx,MPU6050_ADDRESS, MPU6050_ACCEL_FS_2);//don't change leave default seems DMP needs specific range to work properly
 
 	//Load DMP Code in Memory Bank
 	MPU6050_WriteMemoryBlock(I2Cx,MPU6050_ADDRESS,dmpMemory, MPU6050_DMP_CODE_SIZE, 0, 0,1,0);
@@ -631,12 +631,15 @@ void CalculateYawPitchRoll(struct Quaternions *q, struct GravityVector *v, struc
 
 	//MPU6050 position on Drone--> X direction (+ drone right)-Rotation around x Pitch, Y direction (+ drone front) -Rotation around Y Roll
 	ang->yaw=zRad*RADIANSTODEGREES;
+	ang->yaw+=YAWDMPOFFSET;
 	if ( ang->yaw < -180 ) ang->yaw += 360;
 
 	ang->pitch=xRad*RADIANSTODEGREES;
+	ang->pitch+=PITCHDMPOFFSET; //Add manual offset
 	if ( ang->pitch < -180 ) ang->pitch += 360;
 
 	ang->roll=yRad*RADIANSTODEGREES;
+	ang->roll+=ROLLDMPOFFSET; //Add manual offset
 	if ( ang->roll < -180 ) ang->roll += 360;
 	ang->roll=-ang->roll; //positive angle drone tilt to right
 
