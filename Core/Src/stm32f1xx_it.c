@@ -84,17 +84,6 @@ uint32_t FlashEraseTimeoutCount;
 uint32_t Gyrocalibcount=0;
 uint8_t AnglePitchDIR,AngleRollDIR;		//+- direction of angles for NRF24 sending
 uint8_t AngleRollNRF24,AnglePitchNRF24; //positive angles for NRF24 sending
-float AnglePitch;
-float AngleRoll;
-float SpeedAnglePitch;
-float SpeedAngleRoll;
-float SpeedAngleYaw;
-
-//AngularSpeeds not calibrated
-float gyroXDegperSecond;
-float gyroYDegperSecond;
-float gyroZDegperSecond;
-
 
 //reference INPUTS
 float ThrottleINscaled;
@@ -495,26 +484,26 @@ void TIM2_IRQHandler(void)
   	 	 	 									nRF24_payloadTX[2] = (uint8_t)((BattmVAVG & 0xFF00)>>8);
 
   	 	 	 								  	//save Angle for NRF24 transfer
-  	 	 	 								  	if(AnglePitch<0)
+  	 	 	 								  	if(mpu6050DataStr.pitch<0)
   	 	 	 								  	{
   	 	 	 								  		AnglePitchDIR=1;
-  	 	 	 								  	 	AnglePitchNRF24=AnglePitch*(-1);
+  	 	 	 								  	 	AnglePitchNRF24=mpu6050DataStr.pitch*(-1);
   	 	 	 								  	}
   	 	 	 								  	else
   	 	 	 								  	{
   	 	 	 								  		AnglePitchDIR=0;
-  	 	 	 								  	 	AnglePitchNRF24=AnglePitch;
+  	 	 	 								  	 	AnglePitchNRF24=mpu6050DataStr.pitch;
   	 	 	 								  	}
 
-  	 	 	 								  	if(AngleRoll<0)
+  	 	 	 								  	if(mpu6050DataStr.roll<0)
   	 	 	 								  	{
   	 	 	 								  		AngleRollDIR=1;
-  	 	 	 								  		AngleRollNRF24=AngleRoll*(-1);
+  	 	 	 								  		AngleRollNRF24=mpu6050DataStr.roll*(-1);
   	 	 	 								  	}
   	 	 	 								  	else
   	 	 	 								  	{
   	 	 	 								  		AngleRollDIR=0;
-  	 	 	 								  		AngleRollNRF24=AngleRoll;
+  	 	 	 								  		AngleRollNRF24=mpu6050DataStr.roll;
   	 	 	 								  	}
 
   	 	 	 								  	nRF24_payloadTX[3] = (uint8_t)(AnglePitchNRF24);
@@ -600,32 +589,23 @@ void TIM2_IRQHandler(void)
   }//-----------------------------------------------------------------
 
   //MPU 6050-----------------------------------------------------------
-  MPU6050_GetCurrentFIFOPacket(&hi2c2,MPU6050_ADDRESS,fifoBuffer,packetSize);
-  CalculateQuaternions(&QuaternionMPU60500,fifoBuffer);
-  CalculateGravityVector(&QuaternionMPU60500, &GravityVectorMPU6050);
-  CalculateYawPitchRoll(&QuaternionMPU60500, &GravityVectorMPU6050,&AnglesMPU6050_DMP);
 
   //Get Gyro registers
   MPU6050_gyroread(&hi2c2,&mpu6050DataStr);
-  //Calculate angular velocity
-  gyroXDegperSecond=(float)(mpu6050DataStr.Gyroscope_X-OFFSETGYROROLL)/GYROCONSTANT;
-  gyroYDegperSecond=(float)(mpu6050DataStr.Gyroscope_Y-OFFSETGYROPITCH)/GYROCONSTANT;
-  gyroZDegperSecond=(float)(mpu6050DataStr.Gyroscope_Z-OFFSETGYROYAW)/GYROCONSTANT;
+  //Get Accel registers
+  MPU6050_accread(&hi2c2,&mpu6050DataStr);
 
-  //Pitch Roll Absolute Angle from DMP
-  AnglePitch=AnglesMPU6050_DMP.pitch;
-  AngleRoll=AnglesMPU6050_DMP.roll;
+  //Calculate RAW data
+  MPU6050_CalculateFromRAWData(&mpu6050DataStr,0.002);
 
-  //Yaw Angular velocity from Gyro
-  SpeedAngleYaw=-gyroZDegperSecond;  // rotation in left is negative
-  SpeedAnglePitch=gyroXDegperSecond; //only debug not used in regulation
-  SpeedAngleRoll=gyroYDegperSecond;  //only debug not used in regulation
-
+  //Combine Gyro And Accel Data
+  mpu6050DataStr.pitch = 0.998*mpu6050DataStr.Angle_Gyro_Pitch + 0.002*mpu6050DataStr.Angle_Accel_Pitch;
+  mpu6050DataStr.roll = 0.998*mpu6050DataStr.Angle_Gyro_Roll + 0.002*mpu6050DataStr.Angle_Accel_Roll;
 
   //PID input Filtered
-  PitchPIDin =  (PitchPIDin * 0.95) + (AnglePitch * 0.05);
-  RollPIDin = (RollPIDin * 0.95) + (AngleRoll * 0.05);
-  YawPIDin = (YawPIDin * 0.95) + (SpeedAngleYaw * 0.05);
+  PitchPIDin =  (PitchPIDin * 0.95) + (mpu6050DataStr.pitch  * 0.05);
+  RollPIDin = (RollPIDin * 0.95) + (mpu6050DataStr.roll * 0.05);
+  YawPIDin = (YawPIDin * 0.95) + (mpu6050DataStr.AngleSpeed_Gyro_Z * 0.05);
   //-------------------------------------------------------------------
 
   //SCALE DATA
@@ -664,10 +644,6 @@ void TIM2_IRQHandler(void)
   if(togg2hist==0 && togg2==1 && GyroCalibStatus==0 && MotorStatus==MOTOROFF) //button 2 pressed Motor OFF Calib not in progress
   {
 	  GyroCalibStatus=1;
-	  SUMGyroX=0;
-	  SUMGyroY=0;
-	  SUMGyroZ=0;
-	  Gyrocalibcount=0;
   }
 
   //Write and Erase Flash operation timeout to prevent multiple calls in sequence
@@ -680,7 +656,6 @@ void TIM2_IRQHandler(void)
 	  WriteFlashData(FLASHCONSTADDR, &FlashDataActive);
 	  ReadFlashData(FLASHCONSTADDR, &FlashDataFlash);//Read back values to Flash structure
 	  FlashWriteFlag=0;//reset
-	  watch1++;
   }
 
   //Erase Flash Data
@@ -688,11 +663,11 @@ void TIM2_IRQHandler(void)
   {
 	  EraseFlashData(FLASHCONSTADDR);
 	  FlashEraseFlag=0;//reset
-	  watch2++;
   }
 
   if(GyroCalibStatus==1)
   {
+	 GetGyroOffset(&hi2c2, &mpu6050DataStr, GYROCALIBVALUES);
 	 GyroCalibStatus=0;
 
   }//--------------------------------------------------------------------------------------------------
@@ -701,7 +676,13 @@ void TIM2_IRQHandler(void)
   {
 
 	  if(GyroCalibStatus==0)//only if calib is finished allow transition
-	  MotorStatus=MOTORRUNNING;
+	  {
+		  //Before Start trasfer Accel Angles to Gyro Angles
+		  mpu6050DataStr.Angle_Gyro_Pitch = mpu6050DataStr.Angle_Accel_Pitch;
+		  mpu6050DataStr.Angle_Gyro_Roll = mpu6050DataStr.Angle_Accel_Roll;
+
+		  MotorStatus=MOTORRUNNING;
+	  }
   }
 
   //MOT 1 FRONT LEFT  CW

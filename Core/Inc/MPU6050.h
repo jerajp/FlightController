@@ -123,12 +123,37 @@ typedef enum {
 } MPU6050_Result;
 
 typedef struct  {
-	int16_t Accelerometer_X; /*!< Accelerometer value X axis */
-	int16_t Accelerometer_Y; /*!< Accelerometer value Y axis */
-	int16_t Accelerometer_Z; /*!< Accelerometer value Z axis */
-	int16_t Gyroscope_X;     /*!< Gyroscope value X axis */
-	int16_t Gyroscope_Y;     /*!< Gyroscope value Y axis */
-	int16_t Gyroscope_Z;     /*!< Gyroscope value Z axis */
+	int16_t Accelerometer_X_RAW;
+	int16_t Accelerometer_Y_RAW;
+	int16_t Accelerometer_Z_RAW;
+
+	int16_t Gyroscope_X_RAW;
+	int16_t Gyroscope_Y_RAW;
+	int16_t Gyroscope_Z_RAW;
+
+	float Offset_Gyro_X;
+	float Offset_Gyro_Y;
+	float Offset_Gyro_Z;
+
+	float Gyroscope_X_Cal;
+	float Gyroscope_Y_Cal;
+	float Gyroscope_Z_Cal;
+
+	float Angle_Accel_Pitch;
+	float Angle_Accel_Roll;
+
+	float Angle_Gyro_Pitch;
+	float Angle_Gyro_Roll;
+	float Angle_Gyro_Yaw;
+
+	float AngleSpeed_Gyro_X;
+	float AngleSpeed_Gyro_Y;
+	float AngleSpeed_Gyro_Z;
+
+	float pitch;
+	float roll;
+	float yaw;
+
 } MPU6050str;
 
 struct Quaternions
@@ -202,5 +227,8 @@ uint8_t MPU6050_GetFIFOEnableStatus(I2C_HandleTypeDef* I2Cx, uint8_t DeviceAddre
 void CalculateQuaternions(struct Quaternions *q, uint8_t *fifodata);
 void CalculateGravityVector(struct Quaternions *q, struct GravityVector *v);
 void CalculateYawPitchRoll(struct Quaternions *q, struct GravityVector *v, struct Angles *ang);
+
+void MPU6050_CalculateFromRAWData(MPU6050str* d,float timedelta);
+void GetGyroOffset(I2C_HandleTypeDef* I2Cx, MPU6050str* d, int32_t Loops);
 
 #endif /* MPU6050_H */

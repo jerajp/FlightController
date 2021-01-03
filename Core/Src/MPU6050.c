@@ -200,9 +200,9 @@ void MPU6050_accread(I2C_HandleTypeDef* I2Cx, MPU6050str* DataStruct)
 	uint8_t data[6];
 	HAL_I2C_Mem_Read (I2Cx, MPU6050_ADDRESS, MPU6050_ACCEL_RA_XOUT_H, 1, data, 6, 1000);
 
-	DataStruct->Accelerometer_X = (int16_t)(data[0] << 8 | data [1]);
-	DataStruct->Accelerometer_Y = (int16_t)(data[2] << 8 | data [3]);
-	DataStruct->Accelerometer_Z = (int16_t)(data[4] << 8 | data [5]);
+	DataStruct->Accelerometer_X_RAW = (int16_t)(data[0] << 8 | data [1]);
+	DataStruct->Accelerometer_Y_RAW = (int16_t)(data[2] << 8 | data [3]);
+	DataStruct->Accelerometer_Z_RAW = (int16_t)(data[4] << 8 | data [5]);
 
 }
 
@@ -211,9 +211,9 @@ void MPU6050_gyroread(I2C_HandleTypeDef* I2Cx, MPU6050str* DataStruct)
 	uint8_t data[6];
 	HAL_I2C_Mem_Read (I2Cx, MPU6050_ADDRESS, MPU6050_RA_GYRO_XOUT_H, 1, data, 6, 1000);
 
-	DataStruct->Gyroscope_X = (int16_t)(data[0] << 8 | data [1]);
-	DataStruct->Gyroscope_Y = (int16_t)(data[2] << 8 | data [3]);
-	DataStruct->Gyroscope_Z = (int16_t)(data[4] << 8 | data [5]);
+	DataStruct->Gyroscope_X_RAW = (int16_t)(data[0] << 8 | data [1]);
+	DataStruct->Gyroscope_Y_RAW = (int16_t)(data[2] << 8 | data [3]);
+	DataStruct->Gyroscope_Z_RAW = (int16_t)(data[4] << 8 | data [5]);
 }
 
 void MPU6050_init(I2C_HandleTypeDef* I2Cx)
@@ -221,8 +221,9 @@ void MPU6050_init(I2C_HandleTypeDef* I2Cx)
 	//example simple init
 	MPU6050_Set_CLK_Source(I2Cx,MPU6050_ADDRESS,MPU6050_CLOCK_PLL_XGYRO);
 	MPU6050_SetSleepEnabled(I2Cx,MPU6050_ADDRESS,0);
-	MPU6050_SetGyroRange(I2Cx,MPU6050_ADDRESS, MPU6050_GYRO_FS_250);
-	MPU6050_SetAccelRange(I2Cx,MPU6050_ADDRESS, MPU6050_ACCEL_FS_2);
+	MPU6050_SetGyroRange(I2Cx,MPU6050_ADDRESS, MPU6050_GYRO_FS_500);
+	MPU6050_SetAccelRange(I2Cx,MPU6050_ADDRESS, MPU6050_ACCEL_FS_4);
+	SetDLPFMode(I2Cx,MPU6050_ADDRESS, MPU6050_DLPF_BW_256); //gyro fast sample rate
 }
 
 void MPU6050_DMP_Enable(I2C_HandleTypeDef* I2Cx,uint8_t DeviceAddress, uint8_t enable)
@@ -642,6 +643,73 @@ void CalculateYawPitchRoll(struct Quaternions *q, struct GravityVector *v, struc
 	ang->roll+=ROLLDMPOFFSET; //Add manual offset
 	if ( ang->roll < -180 ) ang->roll += 360;
 	ang->roll=-ang->roll; //positive angle drone tilt to right
+}
 
+void MPU6050_CalculateFromRAWData(MPU6050str* d,float timedelta)
+{
+	float AccelVector;
+
+	//Offset RAW gyro values with calibrated offsets
+	d->Gyroscope_X_Cal = (float)(d->Gyroscope_X_RAW) - d->Offset_Gyro_X;
+	d->Gyroscope_Y_Cal = (float)(d->Gyroscope_Y_RAW) - d->Offset_Gyro_Y;
+	d->Gyroscope_Z_Cal = (float)(d->Gyroscope_Z_RAW) - d->Offset_Gyro_Z;
+
+	//Calculate angular gyro velocities
+	d->AngleSpeed_Gyro_X = d->Gyroscope_X_Cal / GYROCONSTANT;
+	d->AngleSpeed_Gyro_Y = d->Gyroscope_Y_Cal / GYROCONSTANT;
+	d->AngleSpeed_Gyro_Z = d->Gyroscope_Z_Cal / GYROCONSTANT;
+
+	//Accelerometer angles
+	AccelVector = sqrt( (d->Accelerometer_X_RAW * d->Accelerometer_X_RAW) + (d->Accelerometer_Y_RAW * d->Accelerometer_Y_RAW) + (d->Accelerometer_Z_RAW * d->Accelerometer_Z_RAW) );
+	d->Angle_Accel_Pitch = asin( (float)(d->Accelerometer_Y_RAW) / AccelVector ) * RADIANSTODEGREES;
+	d->Angle_Accel_Roll = -asin( (float)(d->Accelerometer_X_RAW) / AccelVector) * RADIANSTODEGREES;
+
+	//Compensate angle with spirit level manual angles
+	d->Angle_Accel_Pitch-=ACCELPITCHMANUALOFFSET;
+	d->Angle_Accel_Roll-=ACCELROLLMANUALOFFSET;
+
+	//integrate GyroAngles
+	d->Angle_Gyro_Pitch+=d->AngleSpeed_Gyro_X * timedelta;
+	d->Angle_Gyro_Roll+=d->AngleSpeed_Gyro_Y * timedelta;
+	d->Angle_Gyro_Yaw+=d->AngleSpeed_Gyro_Z * timedelta;
+
+	//compensate angles for YAW
+	d->Angle_Gyro_Pitch-=d->Angle_Gyro_Roll * sin(d->Gyroscope_Z_Cal / GYROCONSTANT * timedelta * DEGREESTORADIANS );
+	d->Angle_Gyro_Roll+=d->Angle_Gyro_Pitch * sin(d->Gyroscope_Z_Cal / GYROCONSTANT  * timedelta * DEGREESTORADIANS );
 
 }
+
+void GetGyroOffset(I2C_HandleTypeDef* I2Cx, MPU6050str* d, int32_t Loops)
+{
+	int32_t SUMGyroX,SUMGyroY,SUMGyroZ;
+	uint32_t i;
+
+	SUMGyroX=0;
+	SUMGyroY=0;
+	SUMGyroZ=0;
+
+	for(i=0;i<Loops;i++)
+	{
+		  MPU6050_gyroread(&hi2c2,&mpu6050DataStr);
+
+		  SUMGyroX+=d->Gyroscope_X_RAW;
+		  SUMGyroY+=d->Gyroscope_Y_RAW;
+		  SUMGyroZ+=d->Gyroscope_Z_RAW;
+
+		  HAL_Delay(1);
+	}
+
+	d->Offset_Gyro_X=(float)(SUMGyroX) / (float)(Loops);
+	d->Offset_Gyro_Y=(float)(SUMGyroY) / (float)(Loops);
+	d->Offset_Gyro_Z=(float)(SUMGyroZ) / (float)(Loops);
+
+	MPU6050_accread(&hi2c2,&mpu6050DataStr);
+
+	MPU6050_CalculateFromRAWData(&mpu6050DataStr,0); //Gyro angles don't matter
+
+	//Transfer accelerometer angles to Gyro
+	mpu6050DataStr.Angle_Gyro_Pitch = mpu6050DataStr.Angle_Accel_Pitch;
+	mpu6050DataStr.Angle_Gyro_Roll = mpu6050DataStr.Angle_Accel_Roll;
+}
+
+
