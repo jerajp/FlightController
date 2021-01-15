@@ -218,11 +218,21 @@ void MPU6050_gyroread(I2C_HandleTypeDef* I2Cx, MPU6050str* DataStruct)
 
 void MPU6050_init(I2C_HandleTypeDef* I2Cx)
 {
-	//example simple init
-	MPU6050_Set_CLK_Source(I2Cx,MPU6050_ADDRESS,MPU6050_CLOCK_PLL_XGYRO);
-	MPU6050_SetSleepEnabled(I2Cx,MPU6050_ADDRESS,0);
-	MPU6050_SetGyroRange(I2Cx,MPU6050_ADDRESS, MPU6050_GYRO_FS_500);
-	MPU6050_SetAccelRange(I2Cx,MPU6050_ADDRESS, MPU6050_ACCEL_FS_4);
+	//reset Device
+	MPU6050_Reset(I2Cx,MPU6050_ADDRESS);
+	HAL_Delay(100);
+
+	MPU6050_SetSleepEnabled(I2Cx,MPU6050_ADDRESS,0); //get from sleep mode
+	MPU6050_Set_CLK_Source(I2Cx,MPU6050_ADDRESS,MPU6050_CLOCK_PLL_ZGYRO);
+
+	HAL_Delay(50);//PLL settling time
+
+	MPU6050_SetRate(I2Cx,MPU6050_ADDRESS, 0);// Sample Rate equals Gyro sample range
+
+	HAL_Delay(50);
+
+	MPU6050_SetGyroRange(I2Cx,MPU6050_ADDRESS, MPU6050_GYRO_FS_2000);
+	MPU6050_SetAccelRange(I2Cx,MPU6050_ADDRESS, MPU6050_ACCEL_FS_8);
 	SetDLPFMode(I2Cx,MPU6050_ADDRESS, MPU6050_DLPF_BW_256); //gyro fast sample rate
 }
 
@@ -649,6 +659,16 @@ void MPU6050_CalculateFromRAWData(MPU6050str* d,float timedelta)
 {
 	float AccelVector;
 
+ 	float mat[3][3];
+    float cosx, sinx, cosy, siny, cosz, sinz;
+    float coszcosx, sinzcosx, coszsinx, sinzsinx;
+
+    //Delta angles
+    float rollIncrement;
+    float pitchIncrement;
+    float yawincrement;
+
+
 	//Offset RAW gyro values with calibrated offsets
 	d->Gyroscope_X_Cal = (float)(d->Gyroscope_X_RAW) - d->Offset_Gyro_X;
 	d->Gyroscope_Y_Cal = (float)(d->Gyroscope_Y_RAW) - d->Offset_Gyro_Y;
@@ -661,8 +681,8 @@ void MPU6050_CalculateFromRAWData(MPU6050str* d,float timedelta)
 
 	//Accelerometer angles
 	AccelVector = sqrt( (d->Accelerometer_X_RAW * d->Accelerometer_X_RAW) + (d->Accelerometer_Y_RAW * d->Accelerometer_Y_RAW) + (d->Accelerometer_Z_RAW * d->Accelerometer_Z_RAW) );
-	d->Angle_Accel_Pitch = asin( (float)(d->Accelerometer_Y_RAW) / AccelVector ) * RADIANSTODEGREES;
-	d->Angle_Accel_Roll = -asin( (float)(d->Accelerometer_X_RAW) / AccelVector) * RADIANSTODEGREES;
+	d->Angle_Accel_Pitch = sin( (float)(d->Accelerometer_Y_RAW) / AccelVector ) * RADIANSTODEGREES;
+	d->Angle_Accel_Roll = -sin( (float)(d->Accelerometer_X_RAW) / AccelVector) * RADIANSTODEGREES;
 
 	//Compensate angle with spirit level manual angles
 	d->Angle_Accel_Pitch-=ACCELPITCHMANUALOFFSET;
@@ -674,8 +694,45 @@ void MPU6050_CalculateFromRAWData(MPU6050str* d,float timedelta)
 	d->Angle_Gyro_Yaw+=d->AngleSpeed_Gyro_Z * timedelta;
 
 	//compensate angles for YAW
-	d->Angle_Gyro_Pitch-=d->Angle_Gyro_Roll * sin(d->Gyroscope_Z_Cal / GYROCONSTANT * timedelta * DEGREESTORADIANS );
-	d->Angle_Gyro_Roll+=d->Angle_Gyro_Pitch * sin(d->Gyroscope_Z_Cal / GYROCONSTANT  * timedelta * DEGREESTORADIANS );
+	d->Angle_Gyro_Pitch+=d->Angle_Gyro_Roll * sin(d->Gyroscope_Z_Cal / GYROCONSTANT * timedelta * DEGREESTORADIANS );
+	d->Angle_Gyro_Roll-=d->Angle_Gyro_Pitch * sin(d->Gyroscope_Z_Cal / GYROCONSTANT  * timedelta * DEGREESTORADIANS );
+
+	/*
+    rollIncrement=d->AngleSpeed_Gyro_X * timedelta;
+    pitchIncrement=d->AngleSpeed_Gyro_Y * timedelta;
+    yawincrement=d->AngleSpeed_Gyro_Z * timedelta;
+
+	cosx = cos(rollIncrement * DEGREESTORADIANS); 	//ROLL
+	sinx = sin(rollIncrement * DEGREESTORADIANS); 	//ROLL
+	cosy = cos(pitchIncrement * DEGREESTORADIANS); 	//PITCH
+	siny = sin(pitchIncrement * DEGREESTORADIANS); 	//PITCH
+	cosz = cos(yawincrement * DEGREESTORADIANS); 	//YAW
+	sinz = sin(yawincrement * DEGREESTORADIANS); 	//YAW
+
+	coszcosx = cosz * cosx;
+	sinzcosx = sinz * cosx;
+	coszsinx = sinx * cosz;
+	sinzsinx = sinx * sinz;
+
+	mat[0][0] = cosz * cosy;
+	mat[0][1] = -cosy * sinz;
+	mat[0][2] = siny;
+	mat[1][0] = sinzcosx + (coszsinx * siny);
+	mat[1][1] = coszcosx - (sinzsinx * siny);
+	mat[1][2] = -sinx * cosy;
+	mat[2][0] = (sinzsinx) - (coszcosx * siny);
+	mat[2][1] = (coszsinx) + (sinzcosx * siny);
+	mat[2][2] = cosy * cosx;
+
+	//OLD ANGLES
+	float X = d->Angle_Gyro_Pitch;
+	float Y = d->Angle_Gyro_Roll;
+	float Z = d->Angle_Gyro_Yaw;
+
+	//CALCULATE NEW ANGLES ->TRANSFORM EXISTING ANGLES FOR INCRMENTAL pitch,roll,yaw angles
+	d->Angle_Gyro_Pitch = X * mat[0][0] + Y * mat[1][0] + Z * mat[2][0];
+	d->Angle_Gyro_Roll = X * mat[0][1] + Y * mat[1][1] + Z * mat[2][1];
+	d->Angle_Gyro_Yaw = X * mat[0][2] + Y * mat[1][2] + Z * mat[2][2];*/
 
 }
 

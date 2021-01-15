@@ -141,6 +141,7 @@ typedef struct  {
 
 	float Angle_Accel_Pitch;
 	float Angle_Accel_Roll;
+	float Angle_Accel_Yaw;
 
 	float Angle_Gyro_Pitch;
 	float Angle_Gyro_Roll;

@@ -93,14 +93,14 @@ extern "C" {
 
 //MPU6050
 //#define ACCELCONSTANT (float)(16384.0)  //uncomment for AFS_SEL=0 (+-2G) used in init procedure
-#define ACCELCONSTANT (float)(8192.0)  //uncomment for AFS_SEL=1 (+-4G) used in init procedure
-//#define ACCELCONSTANT (float)(4096.0)  //uncomment for AFS_SEL=2 (+-8G) used in init procedure
+//#define ACCELCONSTANT (float)(8192.0)  //uncomment for AFS_SEL=1 (+-4G) used in init procedure
+#define ACCELCONSTANT (float)(4096.0)  //uncomment for AFS_SEL=2 (+-8G) used in init procedure
 //#define ACCELCONSTANT (float)(2048.0)  //uncomment for AFS_SEL=3 (+-16G) used in init procedure
 
 //#define GYROCONSTANT (float)(131.0)  //uncomment for FS_SEL=0 (+-250) used in init procedure
-#define GYROCONSTANT (float)(65.5)  //uncomment for FS_SEL=1 (+-500) used in init procedure
+//#define GYROCONSTANT (float)(65.5)  //uncomment for FS_SEL=1 (+-500) used in init procedure
 //#define GYROCONSTANT (float)(32.8)  //uncomment for FS_SEL=2 (+-1000) used in init procedure
-//#define GYROCONSTANT (float)(16.4)  //uncomment for FS_SEL=3 (+-2000) used in init procedure
+#define GYROCONSTANT (float)(16.4)  //uncomment for FS_SEL=3 (+-2000) used in init procedure
 
 //SAFETY THROTTLE CHECK AT STARTUP
 #define MOTORSTARTBLOCKTHRESHOLD	200  //max throttle stick position to allow start
@@ -174,6 +174,8 @@ void WriteString(char string[]);
 void PrintCharUart (int ch);
 
 extern uint32_t watch1,watch2,watch3,watch4,watch5,watch6;
+extern int32_t test1;
+
 extern float watch1fl,watch2fl,watch3fl,watch4fl;
 extern uint16_t AdcDataArray[1];
 extern uint32_t MotorStatus;

@@ -59,6 +59,7 @@ UART_HandleTypeDef huart1;
 
 /* USER CODE BEGIN PV */
 uint32_t watch1,watch2,watch3,watch4,watch5,watch6;
+int32_t test1;
 float watch1fl,watch2fl,watch3fl,watch4fl;
 
 //NRF24

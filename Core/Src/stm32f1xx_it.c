@@ -286,6 +286,9 @@ void TIM2_IRQHandler(void)
   HAL_TIM_IRQHandler(&htim2);
   /* USER CODE BEGIN TIM2_IRQn 1 */
 
+  test1=mpu6050DataStr.Gyroscope_Z_Cal;
+
+
   HAL_GPIO_WritePin(TEST1_PIN_GPIO_Port,TEST1_PIN_Pin,GPIO_PIN_SET);
 
   //blinky
@@ -596,6 +599,7 @@ void TIM2_IRQHandler(void)
   MPU6050_accread(&hi2c2,&mpu6050DataStr);
 
   //Calculate RAW data
+  watch1=TIM2->CNT;
   MPU6050_CalculateFromRAWData(&mpu6050DataStr,0.002);
 
   //Combine Gyro And Accel Data
