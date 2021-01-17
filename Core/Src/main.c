@@ -109,6 +109,8 @@ struct Quaternions QuaternionMPU60500;
 struct GravityVector GravityVectorMPU6050;
 struct Angles AnglesMPU6050_DMP;
 
+
+float mat[3][3];
 /* USER CODE END PV */
 
 /* Private function prototypes -----------------------------------------------*/

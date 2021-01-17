@@ -659,7 +659,7 @@ void MPU6050_CalculateFromRAWData(MPU6050str* d,float timedelta)
 {
 	float AccelVector;
 
- 	float mat[3][3];
+ 	//float mat[3][3];
     float cosx, sinx, cosy, siny, cosz, sinz;
     float coszcosx, sinzcosx, coszsinx, sinzsinx;
 
@@ -689,19 +689,29 @@ void MPU6050_CalculateFromRAWData(MPU6050str* d,float timedelta)
 	d->Angle_Accel_Roll-=ACCELROLLMANUALOFFSET;
 
 	//integrate GyroAngles
-	d->Angle_Gyro_Pitch+=d->AngleSpeed_Gyro_X * timedelta;
-	d->Angle_Gyro_Roll+=d->AngleSpeed_Gyro_Y * timedelta;
-	d->Angle_Gyro_Yaw+=d->AngleSpeed_Gyro_Z * timedelta;
+	//d->Angle_Gyro_Pitch+=d->AngleSpeed_Gyro_X * timedelta;
+	//d->Angle_Gyro_Roll+=d->AngleSpeed_Gyro_Y * timedelta;
+	//d->Angle_Gyro_Yaw+=d->AngleSpeed_Gyro_Z * timedelta;
 
 	//compensate angles for YAW
-	d->Angle_Gyro_Pitch+=d->Angle_Gyro_Roll * sin(d->Gyroscope_Z_Cal / GYROCONSTANT * timedelta * DEGREESTORADIANS );
-	d->Angle_Gyro_Roll-=d->Angle_Gyro_Pitch * sin(d->Gyroscope_Z_Cal / GYROCONSTANT  * timedelta * DEGREESTORADIANS );
+	//d->Angle_Gyro_Pitch+=d->Angle_Gyro_Roll * sin(d->Gyroscope_Z_Cal / GYROCONSTANT * timedelta * DEGREESTORADIANS );
+	//d->Angle_Gyro_Roll-=d->Angle_Gyro_Pitch * sin(d->Gyroscope_Z_Cal / GYROCONSTANT  * timedelta * DEGREESTORADIANS );
 
-	/*
-    rollIncrement=d->AngleSpeed_Gyro_X * timedelta;
-    pitchIncrement=d->AngleSpeed_Gyro_Y * timedelta;
-    yawincrement=d->AngleSpeed_Gyro_Z * timedelta;
+	//HW Dependent Gyro sensor X positive right wing, y positive nose, z positive UP
+	//Standard orientation X positive nose, y positive right wing, z positive down
 
+	//x,y, z correspond to standard orientation
+	//Save ANGLES from previous STEP
+	float X = d->Angle_Gyro_Roll;
+	float Y = d->Angle_Gyro_Pitch;
+	float Z = d->Angle_Gyro_Yaw;
+
+	//Calculate STEP Incremental Angles
+	rollIncrement=d->AngleSpeed_Gyro_Y * timedelta; //Gyro Y is in direction of standard orientation X !
+    pitchIncrement=d->AngleSpeed_Gyro_X * timedelta;//Gyro X is in direction of standard orientation Y !
+    yawincrement=d->AngleSpeed_Gyro_Z * timedelta; //points up!
+
+	//APPLY TRANSFORMATIONAL MATRIX
 	cosx = cos(rollIncrement * DEGREESTORADIANS); 	//ROLL
 	sinx = sin(rollIncrement * DEGREESTORADIANS); 	//ROLL
 	cosy = cos(pitchIncrement * DEGREESTORADIANS); 	//PITCH
@@ -714,25 +724,41 @@ void MPU6050_CalculateFromRAWData(MPU6050str* d,float timedelta)
 	coszsinx = sinx * cosz;
 	sinzsinx = sinx * sinz;
 
-	mat[0][0] = cosz * cosy;
-	mat[0][1] = -cosy * sinz;
-	mat[0][2] = siny;
-	mat[1][0] = sinzcosx + (coszsinx * siny);
-	mat[1][1] = coszcosx - (sinzsinx * siny);
-	mat[1][2] = -sinx * cosy;
-	mat[2][0] = (sinzsinx) - (coszcosx * siny);
-	mat[2][1] = (coszsinx) + (sinzcosx * siny);
-	mat[2][2] = cosy * cosx;
-
-	//OLD ANGLES
-	float X = d->Angle_Gyro_Pitch;
-	float Y = d->Angle_Gyro_Roll;
-	float Z = d->Angle_Gyro_Yaw;
+	//baseflight matrix
+	//mat[0][0] = cosz * cosy;
+	//mat[0][1] = -cosy * sinz;
+	//mat[0][2] = siny;
+	//mat[1][0] = sinzcosx + (coszsinx * siny);
+	//mat[1][1] = coszcosx - (sinzsinx * siny);
+	//mat[1][2] = -sinx * cosy;
+	//mat[2][0] = (sinzsinx) - (coszcosx * siny);
+	//mat[2][1] = (coszsinx) + (sinzcosx * siny);
+	//mat[2][2] = cosy * cosx;
 
 	//CALCULATE NEW ANGLES ->TRANSFORM EXISTING ANGLES FOR INCRMENTAL pitch,roll,yaw angles
-	d->Angle_Gyro_Pitch = X * mat[0][0] + Y * mat[1][0] + Z * mat[2][0];
-	d->Angle_Gyro_Roll = X * mat[0][1] + Y * mat[1][1] + Z * mat[2][1];
-	d->Angle_Gyro_Yaw = X * mat[0][2] + Y * mat[1][2] + Z * mat[2][2];*/
+	//d->Angle_Gyro_Roll   = rollIncrement   + X * mat[0][0] + Y * mat[1][0] + Z * mat[2][0];
+	//d->Angle_Gyro_Pitch  = pitchIncrement  + X * mat[0][1] + Y * mat[1][1] + Z * mat[2][1];
+	//d->Angle_Gyro_Yaw    = yawincrement    + X * mat[0][2] + Y * mat[1][2] + Z * mat[2][2];
+
+	//Wiki
+	mat[0][0] = cosz*cosy;
+	mat[0][1] = cosz*siny*sinx - sinz*cosx;
+	mat[0][2] = cosz*siny*cosx + sinz*sinx;
+	mat[1][0] = sinz*cosy;
+	mat[1][1] = sinz*siny*sinx + cosz*cosx;
+	mat[1][2] = sinz*siny*cosx - cosz*sinx;
+	mat[2][0] = -siny;
+	mat[2][1] = cosy*sinx;
+	mat[2][2] = cosy*cosx;
+
+	//CALCULATE NEW ANGLES ->TRANSFORM EXISTING ANGLES FOR INCRMENTAL pitch,roll,yaw angles
+	d->Angle_Gyro_Roll   = rollIncrement  + X * mat[0][0] + Y * mat[0][1] + Z * mat[0][2];
+	d->Angle_Gyro_Pitch  = pitchIncrement + X * mat[1][0] + Y * mat[1][1] + Z * mat[1][2];
+	d->Angle_Gyro_Yaw    = yawincrement   + X * mat[2][0] + Y * mat[2][1] + Z * mat[2][2];
+
+	//d->Angle_Gyro_Roll   = rollIncrement  + X *cosz  + Y *(-sinz);
+	//d->Angle_Gyro_Pitch  = pitchIncrement + X *sinz  + Y *cosz ;
+	//d->Angle_Gyro_Yaw    = yawincrement   + Z ;
 
 }
 
@@ -754,11 +780,13 @@ void GetGyroOffset(I2C_HandleTypeDef* I2Cx, MPU6050str* d, int32_t Loops)
 		  SUMGyroZ+=d->Gyroscope_Z_RAW;
 
 		  HAL_Delay(1);
+
 	}
 
 	d->Offset_Gyro_X=(float)(SUMGyroX) / (float)(Loops);
 	d->Offset_Gyro_Y=(float)(SUMGyroY) / (float)(Loops);
 	d->Offset_Gyro_Z=(float)(SUMGyroZ) / (float)(Loops);
+
 
 	MPU6050_accread(&hi2c2,&mpu6050DataStr);
 

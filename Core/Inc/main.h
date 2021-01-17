@@ -235,6 +235,8 @@ extern float pid_output_yaw;
 //Flash structure
 extern struct FlashDatastruct FlashDataActive;
 extern struct FlashDatastruct FlashDataFlash;
+
+extern float mat[3][3];
 /* USER CODE END EFP */
 
 /* Private defines -----------------------------------------------------------*/
