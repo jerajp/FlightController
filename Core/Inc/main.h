@@ -81,7 +81,6 @@ extern "C" {
 
 #define GYROCALIBVALUES (int32_t) (1000)
 
-
 //DMP ABSOULUTE DEGREES OFFSET
 #define PITCHDMPOFFSET (float) (-0.1)
 #define ROLLDMPOFFSET  (float) (-2.9)
@@ -101,6 +100,7 @@ extern "C" {
 //#define GYROCONSTANT (float)(65.5)  //uncomment for FS_SEL=1 (+-500) used in init procedure
 //#define GYROCONSTANT (float)(32.8)  //uncomment for FS_SEL=2 (+-1000) used in init procedure
 #define GYROCONSTANT (float)(16.4)  //uncomment for FS_SEL=3 (+-2000) used in init procedure
+
 
 //SAFETY THROTTLE CHECK AT STARTUP
 #define MOTORSTARTBLOCKTHRESHOLD	200  //max throttle stick position to allow start
@@ -236,7 +236,6 @@ extern float pid_output_yaw;
 extern struct FlashDatastruct FlashDataActive;
 extern struct FlashDatastruct FlashDataFlash;
 
-extern float mat[3][3];
 /* USER CODE END EFP */
 
 /* Private defines -----------------------------------------------------------*/

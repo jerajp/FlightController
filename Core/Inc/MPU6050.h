@@ -139,6 +139,15 @@ typedef struct  {
 	float Gyroscope_Y_Cal;
 	float Gyroscope_Z_Cal;
 
+	//GYRO AND ACCEL DATA in STANDARD X,Y,Z directions Roll (nose), Pitch(right wing), Yaw (down)
+	int16_t Accel_X;
+	int16_t Accel_Y;
+	int16_t Accel_Z;
+
+	int16_t Gyro_X;
+	int16_t Gyro_Y;
+	int16_t Gyro_Z;
+
 	float Angle_Accel_Pitch;
 	float Angle_Accel_Roll;
 	float Angle_Accel_Yaw;
@@ -146,6 +155,10 @@ typedef struct  {
 	float Angle_Gyro_Pitch;
 	float Angle_Gyro_Roll;
 	float Angle_Gyro_Yaw;
+
+	float Angle_Gyro_Pitch_Rad;
+	float Angle_Gyro_Roll_Rad;
+	float Angle_Gyro_Yaw_Rad;
 
 	float AngleSpeed_Gyro_X;
 	float AngleSpeed_Gyro_Y;

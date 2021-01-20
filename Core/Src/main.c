@@ -110,7 +110,6 @@ struct GravityVector GravityVectorMPU6050;
 struct Angles AnglesMPU6050_DMP;
 
 
-float mat[3][3];
 /* USER CODE END PV */
 
 /* Private function prototypes -----------------------------------------------*/
@@ -364,6 +363,9 @@ int main(void)
 	  //WriteString(UartTXbuff0);
 
 	  sprintf(UartTXbuff0, "\n\r" );
+	  WriteString(UartTXbuff0);
+
+	  sprintf(UartTXbuff0, "Acc Raw %d %d %d \n\r",mpu6050DataStr.Accelerometer_X_RAW,mpu6050DataStr.Accelerometer_Y_RAW,mpu6050DataStr.Accelerometer_Z_RAW);
 	  WriteString(UartTXbuff0);
 
 	  sprintf(UartTXbuff0, "Gyro Raw %d %d %d \n\r",mpu6050DataStr.Gyroscope_X_RAW,mpu6050DataStr.Gyroscope_Y_RAW,mpu6050DataStr.Gyroscope_Z_RAW);
