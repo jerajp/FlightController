@@ -8,5 +8,5 @@ stm32f1xx_it.c:234:6:DebugMon_Handler	4	static
 stm32f1xx_it.c:247:6:PendSV_Handler	4	static
 stm32f1xx_it.c:260:6:SysTick_Handler	8	static
 stm32f1xx_it.c:281:6:TIM2_IRQHandler	56	static
-stm32f1xx_it.c:749:7:ScaleDataFl	40	static
-stm32f1xx_it.c:762:7:pid	40	static
+stm32f1xx_it.c:754:7:ScaleDataFl	40	static
+stm32f1xx_it.c:767:7:pid	40	static

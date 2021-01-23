@@ -487,26 +487,26 @@ void TIM2_IRQHandler(void)
   	 	 	 									nRF24_payloadTX[2] = (uint8_t)((BattmVAVG & 0xFF00)>>8);
 
   	 	 	 								  	//save Angle for NRF24 transfer
-  	 	 	 								  	if(mpu6050DataStr.pitch<0)
+  	 	 	 								  	if(mpu6050DataStr.Pitch<0)
   	 	 	 								  	{
   	 	 	 								  		AnglePitchDIR=1;
-  	 	 	 								  	 	AnglePitchNRF24=mpu6050DataStr.pitch*(-1);
+  	 	 	 								  	 	AnglePitchNRF24=mpu6050DataStr.Pitch*(-1);
   	 	 	 								  	}
   	 	 	 								  	else
   	 	 	 								  	{
   	 	 	 								  		AnglePitchDIR=0;
-  	 	 	 								  	 	AnglePitchNRF24=mpu6050DataStr.pitch;
+  	 	 	 								  	 	AnglePitchNRF24=mpu6050DataStr.Pitch;
   	 	 	 								  	}
 
-  	 	 	 								  	if(mpu6050DataStr.roll<0)
+  	 	 	 								  	if(mpu6050DataStr.Roll<0)
   	 	 	 								  	{
   	 	 	 								  		AngleRollDIR=1;
-  	 	 	 								  		AngleRollNRF24=mpu6050DataStr.roll*(-1);
+  	 	 	 								  		AngleRollNRF24=mpu6050DataStr.Roll*(-1);
   	 	 	 								  	}
   	 	 	 								  	else
   	 	 	 								  	{
   	 	 	 								  		AngleRollDIR=0;
-  	 	 	 								  		AngleRollNRF24=mpu6050DataStr.roll;
+  	 	 	 								  		AngleRollNRF24=mpu6050DataStr.Roll;
   	 	 	 								  	}
 
   	 	 	 								  	nRF24_payloadTX[3] = (uint8_t)(AnglePitchNRF24);
@@ -603,9 +603,9 @@ void TIM2_IRQHandler(void)
   MPU6050_CalculateFromRAWData(&mpu6050DataStr,0.002);
 
   //PID input Filtered
-  PitchPIDin =  (PitchPIDin * 0.95) + (mpu6050DataStr.pitch  * 0.05);
-  RollPIDin = (RollPIDin * 0.95) + (mpu6050DataStr.roll * 0.05);
-  YawPIDin = (YawPIDin * 0.95) + (mpu6050DataStr.AngleSpeed_Gyro_Z * 0.05);
+  PitchPIDin =  /*(PitchPIDin * 0.99) */+ (mpu6050DataStr.Pitch  );
+  RollPIDin = /*(RollPIDin * 0.99) */+ (mpu6050DataStr.Roll );
+  YawPIDin = (YawPIDin * 0.99) + (mpu6050DataStr.AngleSpeed_Gyro_Z * 0.01);
   //-------------------------------------------------------------------
 
   //SCALE DATA
@@ -667,12 +667,17 @@ void TIM2_IRQHandler(void)
 
   if(GyroCalibStatus==1)
   {
-	  //Transfer accelerometer angles to Gyro
-	  mpu6050DataStr.Angle_Gyro_Pitch = mpu6050DataStr.Angle_Accel_Pitch;
-	  mpu6050DataStr.Angle_Gyro_Roll = mpu6050DataStr.Angle_Accel_Roll;
-	  mpu6050DataStr.Angle_Gyro_Pitch_Rad = mpu6050DataStr.Angle_Gyro_Pitch * DEGREESTORADIANS;
-	  mpu6050DataStr.Angle_Gyro_Roll_Rad = mpu6050DataStr.Angle_Gyro_Roll * DEGREESTORADIANS;
-	 GyroCalibStatus=0;
+		//Transfer accelerometer angles to Gyro
+	  	mpu6050DataStr.Pitch = mpu6050DataStr.Angle_Accel_Pitch;
+	  	mpu6050DataStr.Roll =  mpu6050DataStr.Angle_Accel_Roll;
+
+	  	mpu6050DataStr.Angle_Gyro_Pitch_Rad = mpu6050DataStr.Angle_Accel_Pitch_Rad;
+	  	mpu6050DataStr.Angle_Gyro_Roll_Rad = mpu6050DataStr.Angle_Accel_Roll_Rad;
+
+	  	mpu6050DataStr.Angle_Gyro_Yaw = 0;
+	  	mpu6050DataStr.Angle_Gyro_Yaw_Rad = 0;
+
+		GyroCalibStatus=0;
 
   }//--------------------------------------------------------------------------------------------------
 

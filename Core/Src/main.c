@@ -176,20 +176,20 @@ int main(void)
 
   //DEFAULT FLASH CONSTANTS--------------------------------------------------------------------------
   FlashDataDefault.controlData=CONTROLWORD;
-  FlashDataDefault.pid_p_gain_pitch=5.0;
-  FlashDataDefault.pid_i_gain_pitch=0.01;
-  FlashDataDefault.pid_d_gain_pitch=500.0;
-  FlashDataDefault.pid_p_gain_roll=5.0;
-  FlashDataDefault.pid_i_gain_roll=0.01;
-  FlashDataDefault.pid_d_gain_roll=500.0;
-  FlashDataDefault.pid_p_gain_yaw=2.5;
-  FlashDataDefault.pid_i_gain_yaw=0.01;
-  FlashDataDefault.pid_d_gain_yaw=250.0;
+  FlashDataDefault.pid_p_gain_pitch=3.5;
+  FlashDataDefault.pid_i_gain_pitch=0.1;
+  FlashDataDefault.pid_d_gain_pitch=700.0;
+  FlashDataDefault.pid_p_gain_roll=3.5;
+  FlashDataDefault.pid_i_gain_roll=0.1;
+  FlashDataDefault.pid_d_gain_roll=700.0;
+  FlashDataDefault.pid_p_gain_yaw=3.5;
+  FlashDataDefault.pid_i_gain_yaw=0.1;
+  FlashDataDefault.pid_d_gain_yaw=100.0;
   FlashDataDefault.pid_max_pitch = 400;
   FlashDataDefault.pid_i_max_pitch = 100;
   FlashDataDefault.pid_max_roll = 400;
   FlashDataDefault.pid_i_max_roll = 100;
-  FlashDataDefault.pid_max_yaw = 0; //yaw off
+  FlashDataDefault.pid_max_yaw = 0; //no yaw
   FlashDataDefault.pid_i_max_yaw = 100;
   FlashDataDefault.maxpitchdegree=20; //degrees
   FlashDataDefault.maxrolldegree=20;  //degrees
@@ -277,7 +277,7 @@ int main(void)
   //Get Gyro offset--------------------------------------
   GyroCalibStatus=1;
 
-  GetGyroOffset(&hi2c2, &mpu6050DataStr, GYROCALIBVALUES);
+  GetGyroOffset(&hi2c2, &mpu6050DataStr, GYROCALIBVALUES, 1);
 
   GyroCalibStatus=0;
 
@@ -329,19 +329,19 @@ int main(void)
 	  sprintf(UartTXbuff0, "\n\r" );
 	  WriteString(UartTXbuff0);
 
-	  sprintf(UartTXbuff0, "Pitch=%.2f deg\n\r",mpu6050DataStr.pitch);
+	  sprintf(UartTXbuff0, "Pitch=%.2f deg\n\r",mpu6050DataStr.Pitch);
 	  WriteString(UartTXbuff0);
 
-	  sprintf(UartTXbuff0, "Roll=%.2f deg\n\r",mpu6050DataStr.roll);
+	  sprintf(UartTXbuff0, "Roll=%.2f deg\n\r",mpu6050DataStr.Roll);
 	  WriteString(UartTXbuff0);
 
-	  sprintf(UartTXbuff0, "Gyro Pitch=%.2f deg\n\r",mpu6050DataStr.Angle_Gyro_Pitch);
-	  WriteString(UartTXbuff0);
+	  //sprintf(UartTXbuff0, "Gyro Pitch=%.2f deg\n\r",mpu6050DataStr.Angle_Gyro_Pitch);
+	  //WriteString(UartTXbuff0);
 
-	  sprintf(UartTXbuff0, "Gyro Roll=%.2f deg\n\r",mpu6050DataStr.Angle_Gyro_Roll);
-	  WriteString(UartTXbuff0);
+	  //sprintf(UartTXbuff0, "Gyro Roll=%.2f deg\n\r",mpu6050DataStr.Angle_Gyro_Roll);
+	  //WriteString(UartTXbuff0);
 
-	  sprintf(UartTXbuff0, "Gyro Yaw=%.2f deg\n\r",mpu6050DataStr.Angle_Gyro_Yaw);
+	  sprintf(UartTXbuff0, "Yaw-Gyro=%.2f deg\n\r",mpu6050DataStr.Angle_Gyro_Yaw);
 	  WriteString(UartTXbuff0);
 
 	  sprintf(UartTXbuff0, "\n\r" );

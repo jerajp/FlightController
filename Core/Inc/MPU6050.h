@@ -152,6 +152,9 @@ typedef struct  {
 	float Angle_Accel_Roll;
 	float Angle_Accel_Yaw;
 
+	float Angle_Accel_Pitch_Rad;
+	float Angle_Accel_Roll_Rad;
+
 	float Angle_Gyro_Pitch;
 	float Angle_Gyro_Roll;
 	float Angle_Gyro_Yaw;
@@ -164,9 +167,15 @@ typedef struct  {
 	float AngleSpeed_Gyro_Y;
 	float AngleSpeed_Gyro_Z;
 
-	float pitch;
-	float roll;
-	float yaw;
+	float Pitch;
+	float Roll;
+	float Yaw;
+
+	float Pitch_Rad;
+	float Roll_Rad;
+	float Yaw_Rad;
+
+
 
 } MPU6050str;
 
@@ -243,6 +252,6 @@ void CalculateGravityVector(struct Quaternions *q, struct GravityVector *v);
 void CalculateYawPitchRoll(struct Quaternions *q, struct GravityVector *v, struct Angles *ang);
 
 void MPU6050_CalculateFromRAWData(MPU6050str* d,float timedelta);
-void GetGyroOffset(I2C_HandleTypeDef* I2Cx, MPU6050str* d, int32_t Loops);
+void GetGyroOffset(I2C_HandleTypeDef* I2Cx, MPU6050str* d, int32_t Loops, uint32_t Delayms);
 
 #endif /* MPU6050_H */

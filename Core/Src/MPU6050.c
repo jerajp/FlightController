@@ -690,6 +690,9 @@ void MPU6050_CalculateFromRAWData(MPU6050str* d,float timedelta)
 	//Compensate offset with spirit level manual offset
 	d->Angle_Accel_Pitch-=ACCELPITCHMANUALOFFSET;
 	d->Angle_Accel_Roll-=ACCELROLLMANUALOFFSET;
+	//Save angles in Radians
+	d->Angle_Accel_Pitch_Rad=d->Angle_Accel_Pitch*DEGREESTORADIANS;
+	d->Angle_Accel_Roll_Rad=d->Angle_Accel_Roll*DEGREESTORADIANS;
 
 	//Calculate angular gyro velocities----------------------------------------------------
 	d->AngleSpeed_Gyro_X = d->Gyro_X / GYROCONSTANT;
@@ -701,57 +704,23 @@ void MPU6050_CalculateFromRAWData(MPU6050str* d,float timedelta)
 	q = d->AngleSpeed_Gyro_Y * DEGREESTORADIANS;
 	r = d->AngleSpeed_Gyro_Z * DEGREESTORADIANS;
 
-	//Save Gyro angles in radians from previous STEP
-	X = d->Angle_Gyro_Roll_Rad;
-	Y = d->Angle_Gyro_Pitch_Rad;
-	Z = d->Angle_Gyro_Yaw_Rad;
+	//Save Angles in radians from previous STEP
+	X = d->Roll_Rad;
+	Y = d->Pitch_Rad;
+	Z = d->Angle_Gyro_Yaw_Rad ;
 
-	//TRANSFORM gyro data to Euler Angles
-	d->Angle_Gyro_Roll_Rad   = X + timedelta * (p  +  q*sin(X)*tan(Y) + r*cos(X)*tan(Y) );
-	d->Angle_Gyro_Pitch_Rad  = Y + timedelta * (q * cos(X) -  r * sin(X) );
-	d->Angle_Gyro_Yaw_Rad    = Z + timedelta * (q*sin(X)/cos(Y) + r*cos(X)/cos(Y) );
+	//TRANSFORM gyro data to Euler Angles with complementary filter with accelerometer
+	d->Roll_Rad   = 0.999 * (X + timedelta * (p  +  q*sin(X)*tan(Y) + r*cos(X)*tan(Y) ) ) + 0.001*d->Angle_Accel_Roll_Rad;
+	d->Pitch_Rad  = 0.999 * (Y + timedelta * (q * cos(X) -  r * sin(X) ) 			    ) + 0.001*d->Angle_Accel_Pitch_Rad;
+	d->Angle_Gyro_Yaw_Rad = Z + timedelta * (q*sin(X)/cos(Y) + r*cos(X)/cos(Y) ); //Only Gyro Angle will drift
 
 	//Convert to Degrees
-	d->Angle_Gyro_Roll   = d->Angle_Gyro_Roll_Rad * RADIANSTODEGREES;
-	d->Angle_Gyro_Pitch  = d->Angle_Gyro_Pitch_Rad * RADIANSTODEGREES;
-	d->Angle_Gyro_Yaw    = d->Angle_Gyro_Yaw_Rad * RADIANSTODEGREES;
-
-
- 	//float mat[3][3];
-    //float cosx, sinx, cosy, siny, cosz, sinz, tany;
-    //float coszcosx, sinzcosx, coszsinx, sinzsinx;
-
-	//BODY FRAME TO INEERTIAL FRAME TRANSFORMATIONAL MATRIX
-	//cosx = cos(rollIncrement * DEGREESTORADIANS); 	//ROLL
-	//sinx = sin(rollIncrement * DEGREESTORADIANS); 	//ROLL
-	//cosy = cos(pitchIncrement * DEGREESTORADIANS); 	//PITCH
-	//siny = sin(pitchIncrement * DEGREESTORADIANS); 	//PITCH
-	//cosz = cos(yawincrement * DEGREESTORADIANS); 	//YAW
-	//sinz = sin(yawincrement * DEGREESTORADIANS); 	//YAW
-
-	//coszcosx = cosz * cosx;
-	//sinzcosx = sinz * cosx;
-	//coszsinx = sinx * cosz;
-	//sinzsinx = sinx * sinz;
-
-	//Rotational matrix for Body frame to Interial Frame
-	//mat[0][0] = cosz*cosy;
-	//mat[0][1] = cosz*siny*sinx - sinz*cosx;
-	//mat[0][2] = cosz*siny*cosx + sinz*sinx;
-	//mat[1][0] = sinz*cosy;
-	//mat[1][1] = sinz*siny*sinx + cosz*cosx;
-	//mat[1][2] = sinz*siny*cosx - cosz*sinx;
-	//mat[2][0] = -siny;
-	//mat[2][1] = cosy*sinx;
-	//mat[2][2] = cosy*cosx;
-
-	//Combine Gyro And Accel Data Complementary Filter
-	d->pitch = 0.99*mpu6050DataStr.Angle_Gyro_Pitch + 0.01*d->Angle_Accel_Pitch;
-	d->roll = 0.99*mpu6050DataStr.Angle_Gyro_Roll + 0.01*d->Angle_Accel_Roll;
-
+	d->Roll   = d->Roll_Rad * RADIANSTODEGREES;
+	d->Pitch  = d->Pitch_Rad * RADIANSTODEGREES;
+	d->Angle_Gyro_Yaw   = d->Angle_Gyro_Yaw_Rad * RADIANSTODEGREES;
 }
 
-void GetGyroOffset(I2C_HandleTypeDef* I2Cx, MPU6050str* d, int32_t Loops)
+void GetGyroOffset(I2C_HandleTypeDef* I2Cx, MPU6050str* d, int32_t Loops, uint32_t Delayms)
 {
 	int32_t SUMGyroX,SUMGyroY,SUMGyroZ;
 	uint32_t i;
@@ -768,7 +737,7 @@ void GetGyroOffset(I2C_HandleTypeDef* I2Cx, MPU6050str* d, int32_t Loops)
 		  SUMGyroY+=d->Gyroscope_Y_RAW;
 		  SUMGyroZ+=d->Gyroscope_Z_RAW;
 
-		  HAL_Delay(1);
+		  HAL_Delay(Delayms);
 
 	}
 
@@ -782,10 +751,15 @@ void GetGyroOffset(I2C_HandleTypeDef* I2Cx, MPU6050str* d, int32_t Loops)
 	MPU6050_CalculateFromRAWData(&mpu6050DataStr,0); //Gyro angles don't matter
 
 	//Transfer accelerometer angles to Gyro
-	d->Angle_Gyro_Pitch = d->Angle_Accel_Pitch;
-	d->Angle_Gyro_Roll = d->Angle_Accel_Roll;
-	d->Angle_Gyro_Pitch_Rad = d->Angle_Gyro_Pitch * DEGREESTORADIANS;
-	d->Angle_Gyro_Roll_Rad = d->Angle_Gyro_Roll * DEGREESTORADIANS;
+	d->Pitch = d->Angle_Accel_Pitch;
+	d->Roll =  d->Angle_Accel_Roll;
+
+	d->Angle_Gyro_Pitch_Rad = d->Angle_Accel_Pitch_Rad;
+	d->Angle_Gyro_Roll_Rad = d->Angle_Accel_Roll_Rad;
+
+	d->Angle_Gyro_Yaw = 0;
+	d->Angle_Gyro_Yaw_Rad = 0;
+
 }
 
 
