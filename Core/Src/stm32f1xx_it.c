@@ -602,10 +602,6 @@ void TIM2_IRQHandler(void)
   watch1=TIM2->CNT;
   MPU6050_CalculateFromRAWData(&mpu6050DataStr,0.002);
 
-  //Combine Gyro And Accel Data
-  mpu6050DataStr.pitch = 0.998*mpu6050DataStr.Angle_Gyro_Pitch + 0.002*mpu6050DataStr.Angle_Accel_Pitch;
-  mpu6050DataStr.roll = 0.998*mpu6050DataStr.Angle_Gyro_Roll + 0.002*mpu6050DataStr.Angle_Accel_Roll;
-
   //PID input Filtered
   PitchPIDin =  (PitchPIDin * 0.95) + (mpu6050DataStr.pitch  * 0.05);
   RollPIDin = (RollPIDin * 0.95) + (mpu6050DataStr.roll * 0.05);
@@ -671,7 +667,11 @@ void TIM2_IRQHandler(void)
 
   if(GyroCalibStatus==1)
   {
-	 GetGyroOffset(&hi2c2, &mpu6050DataStr, GYROCALIBVALUES);
+	  //Transfer accelerometer angles to Gyro
+	  mpu6050DataStr.Angle_Gyro_Pitch = mpu6050DataStr.Angle_Accel_Pitch;
+	  mpu6050DataStr.Angle_Gyro_Roll = mpu6050DataStr.Angle_Accel_Roll;
+	  mpu6050DataStr.Angle_Gyro_Pitch_Rad = mpu6050DataStr.Angle_Gyro_Pitch * DEGREESTORADIANS;
+	  mpu6050DataStr.Angle_Gyro_Roll_Rad = mpu6050DataStr.Angle_Gyro_Roll * DEGREESTORADIANS;
 	 GyroCalibStatus=0;
 
   }//--------------------------------------------------------------------------------------------------

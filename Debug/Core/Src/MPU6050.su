@@ -45,4 +45,4 @@ MPU6050.c:593:6:CalculateQuaternions	32	static
 MPU6050.c:609:6:CalculateGravityVector	24	static
 MPU6050.c:616:6:CalculateYawPitchRoll	56	static
 MPU6050.c:658:6:MPU6050_CalculateFromRAWData	80	static
-MPU6050.c:750:6:GetGyroOffset	48	static
+MPU6050.c:754:6:GetGyroOffset	48	static

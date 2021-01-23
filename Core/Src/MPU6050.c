@@ -745,6 +745,10 @@ void MPU6050_CalculateFromRAWData(MPU6050str* d,float timedelta)
 	//mat[2][1] = cosy*sinx;
 	//mat[2][2] = cosy*cosx;
 
+	//Combine Gyro And Accel Data Complementary Filter
+	d->pitch = 0.99*mpu6050DataStr.Angle_Gyro_Pitch + 0.01*d->Angle_Accel_Pitch;
+	d->roll = 0.99*mpu6050DataStr.Angle_Gyro_Roll + 0.01*d->Angle_Accel_Roll;
+
 }
 
 void GetGyroOffset(I2C_HandleTypeDef* I2Cx, MPU6050str* d, int32_t Loops)
@@ -778,10 +782,10 @@ void GetGyroOffset(I2C_HandleTypeDef* I2Cx, MPU6050str* d, int32_t Loops)
 	MPU6050_CalculateFromRAWData(&mpu6050DataStr,0); //Gyro angles don't matter
 
 	//Transfer accelerometer angles to Gyro
-	mpu6050DataStr.Angle_Gyro_Pitch = mpu6050DataStr.Angle_Accel_Pitch;
-	mpu6050DataStr.Angle_Gyro_Roll = mpu6050DataStr.Angle_Accel_Roll;
-	mpu6050DataStr.Angle_Gyro_Pitch_Rad = mpu6050DataStr.Angle_Gyro_Pitch * DEGREESTORADIANS;
-	mpu6050DataStr.Angle_Gyro_Roll_Rad =mpu6050DataStr.Angle_Gyro_Roll * DEGREESTORADIANS;
+	d->Angle_Gyro_Pitch = d->Angle_Accel_Pitch;
+	d->Angle_Gyro_Roll = d->Angle_Accel_Roll;
+	d->Angle_Gyro_Pitch_Rad = d->Angle_Gyro_Pitch * DEGREESTORADIANS;
+	d->Angle_Gyro_Roll_Rad = d->Angle_Gyro_Roll * DEGREESTORADIANS;
 }
 
 
