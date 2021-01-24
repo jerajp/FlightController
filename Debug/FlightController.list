@@ -37,11 +37,11 @@ Idx Name          Size      VMA       LMA       File off  Algn
                   CONTENTS, READONLY, DEBUGGING
  16 .debug_macro  000171aa  00000000  00000000  0003db38  2**0
                   CONTENTS, READONLY, DEBUGGING
- 17 .debug_line   0000f771  00000000  00000000  00054ce2  2**0
+ 17 .debug_line   0000f770  00000000  00000000  00054ce2  2**0
                   CONTENTS, READONLY, DEBUGGING
- 18 .debug_str    0007f33d  00000000  00000000  00064453  2**0
+ 18 .debug_str    0007f33d  00000000  00000000  00064452  2**0
                   CONTENTS, READONLY, DEBUGGING
- 19 .comment      0000007b  00000000  00000000  000e3790  2**0
+ 19 .comment      0000007b  00000000  00000000  000e378f  2**0
                   CONTENTS, READONLY
  20 .debug_frame  00006a80  00000000  00000000  000e380c  2**2
                   CONTENTS, READONLY, DEBUGGING
@@ -3107,19 +3107,19 @@ int main(void)
 
 	//test timings DWT counter
 	CoreDebug->DEMCR |= CoreDebug_DEMCR_TRCENA_Msk;
- 8001d44:	4b3b      	ldr	r3, [pc, #236]	; (8001e34 <main+0xf8>)
+ 8001d44:	4b3d      	ldr	r3, [pc, #244]	; (8001e3c <main+0x100>)
  8001d46:	68db      	ldr	r3, [r3, #12]
- 8001d48:	4a3a      	ldr	r2, [pc, #232]	; (8001e34 <main+0xf8>)
+ 8001d48:	4a3c      	ldr	r2, [pc, #240]	; (8001e3c <main+0x100>)
  8001d4a:	f043 7380 	orr.w	r3, r3, #16777216	; 0x1000000
  8001d4e:	60d3      	str	r3, [r2, #12]
 	DWT->CYCCNT = 0;
- 8001d50:	4b39      	ldr	r3, [pc, #228]	; (8001e38 <main+0xfc>)
+ 8001d50:	4b3b      	ldr	r3, [pc, #236]	; (8001e40 <main+0x104>)
  8001d52:	2200      	movs	r2, #0
  8001d54:	605a      	str	r2, [r3, #4]
 	DWT->CTRL |= 1;
- 8001d56:	4b38      	ldr	r3, [pc, #224]	; (8001e38 <main+0xfc>)
+ 8001d56:	4b3a      	ldr	r3, [pc, #232]	; (8001e40 <main+0x104>)
  8001d58:	681b      	ldr	r3, [r3, #0]
- 8001d5a:	4a37      	ldr	r2, [pc, #220]	; (8001e38 <main+0xfc>)
+ 8001d5a:	4a39      	ldr	r2, [pc, #228]	; (8001e40 <main+0x104>)
  8001d5c:	f043 0301 	orr.w	r3, r3, #1
  8001d60:	6013      	str	r3, [r2, #0]
   /* USER CODE END 1 */
@@ -3158,125 +3158,123 @@ int main(void)
   /* USER CODE BEGIN 2 */
 
   HAL_ADCEx_Calibration_Start(&hadc1);
- 8001d86:	482d      	ldr	r0, [pc, #180]	; (8001e3c <main+0x100>)
+ 8001d86:	482f      	ldr	r0, [pc, #188]	; (8001e44 <main+0x108>)
  8001d88:	f004 f848 	bl	8005e1c <HAL_ADCEx_Calibration_Start>
   HAL_ADC_Start(&hadc1);
- 8001d8c:	482b      	ldr	r0, [pc, #172]	; (8001e3c <main+0x100>)
+ 8001d8c:	482d      	ldr	r0, [pc, #180]	; (8001e44 <main+0x108>)
  8001d8e:	f003 fd0d 	bl	80057ac <HAL_ADC_Start>
 
   //DEFAULT FLASH CONSTANTS--------------------------------------------------------------------------
   FlashDataDefault.controlData=CONTROLWORD;
- 8001d92:	4b2b      	ldr	r3, [pc, #172]	; (8001e40 <main+0x104>)
+ 8001d92:	4b2d      	ldr	r3, [pc, #180]	; (8001e48 <main+0x10c>)
  8001d94:	2207      	movs	r2, #7
  8001d96:	601a      	str	r2, [r3, #0]
-  FlashDataDefault.pid_p_gain_pitch=3.5;
- 8001d98:	4b29      	ldr	r3, [pc, #164]	; (8001e40 <main+0x104>)
- 8001d9a:	4a2a      	ldr	r2, [pc, #168]	; (8001e44 <main+0x108>)
+  FlashDataDefault.pid_p_gain_pitch=3.0;
+ 8001d98:	4b2b      	ldr	r3, [pc, #172]	; (8001e48 <main+0x10c>)
+ 8001d9a:	4a2c      	ldr	r2, [pc, #176]	; (8001e4c <main+0x110>)
  8001d9c:	605a      	str	r2, [r3, #4]
-  FlashDataDefault.pid_i_gain_pitch=0.1;
- 8001d9e:	4b28      	ldr	r3, [pc, #160]	; (8001e40 <main+0x104>)
- 8001da0:	4a29      	ldr	r2, [pc, #164]	; (8001e48 <main+0x10c>)
- 8001da2:	609a      	str	r2, [r3, #8]
-  FlashDataDefault.pid_d_gain_pitch=700.0;
- 8001da4:	4b26      	ldr	r3, [pc, #152]	; (8001e40 <main+0x104>)
- 8001da6:	4a29      	ldr	r2, [pc, #164]	; (8001e4c <main+0x110>)
- 8001da8:	60da      	str	r2, [r3, #12]
-  FlashDataDefault.pid_p_gain_roll=3.5;
- 8001daa:	4b25      	ldr	r3, [pc, #148]	; (8001e40 <main+0x104>)
- 8001dac:	4a25      	ldr	r2, [pc, #148]	; (8001e44 <main+0x108>)
- 8001dae:	611a      	str	r2, [r3, #16]
-  FlashDataDefault.pid_i_gain_roll=0.1;
- 8001db0:	4b23      	ldr	r3, [pc, #140]	; (8001e40 <main+0x104>)
- 8001db2:	4a25      	ldr	r2, [pc, #148]	; (8001e48 <main+0x10c>)
- 8001db4:	615a      	str	r2, [r3, #20]
-  FlashDataDefault.pid_d_gain_roll=700.0;
- 8001db6:	4b22      	ldr	r3, [pc, #136]	; (8001e40 <main+0x104>)
- 8001db8:	4a24      	ldr	r2, [pc, #144]	; (8001e4c <main+0x110>)
- 8001dba:	619a      	str	r2, [r3, #24]
-  FlashDataDefault.pid_p_gain_yaw=3.5;
- 8001dbc:	4b20      	ldr	r3, [pc, #128]	; (8001e40 <main+0x104>)
- 8001dbe:	4a21      	ldr	r2, [pc, #132]	; (8001e44 <main+0x108>)
- 8001dc0:	61da      	str	r2, [r3, #28]
-  FlashDataDefault.pid_i_gain_yaw=0.1;
- 8001dc2:	4b1f      	ldr	r3, [pc, #124]	; (8001e40 <main+0x104>)
- 8001dc4:	4a20      	ldr	r2, [pc, #128]	; (8001e48 <main+0x10c>)
- 8001dc6:	621a      	str	r2, [r3, #32]
-  FlashDataDefault.pid_d_gain_yaw=100.0;
- 8001dc8:	4b1d      	ldr	r3, [pc, #116]	; (8001e40 <main+0x104>)
- 8001dca:	4a21      	ldr	r2, [pc, #132]	; (8001e50 <main+0x114>)
- 8001dcc:	625a      	str	r2, [r3, #36]	; 0x24
+  FlashDataDefault.pid_i_gain_pitch=0.0;
+ 8001d9e:	4b2a      	ldr	r3, [pc, #168]	; (8001e48 <main+0x10c>)
+ 8001da0:	f04f 0200 	mov.w	r2, #0
+ 8001da4:	609a      	str	r2, [r3, #8]
+  FlashDataDefault.pid_d_gain_pitch=400.0;
+ 8001da6:	4b28      	ldr	r3, [pc, #160]	; (8001e48 <main+0x10c>)
+ 8001da8:	4a29      	ldr	r2, [pc, #164]	; (8001e50 <main+0x114>)
+ 8001daa:	60da      	str	r2, [r3, #12]
+  FlashDataDefault.pid_p_gain_roll=3.0;
+ 8001dac:	4b26      	ldr	r3, [pc, #152]	; (8001e48 <main+0x10c>)
+ 8001dae:	4a27      	ldr	r2, [pc, #156]	; (8001e4c <main+0x110>)
+ 8001db0:	611a      	str	r2, [r3, #16]
+  FlashDataDefault.pid_i_gain_roll=0.0;
+ 8001db2:	4b25      	ldr	r3, [pc, #148]	; (8001e48 <main+0x10c>)
+ 8001db4:	f04f 0200 	mov.w	r2, #0
+ 8001db8:	615a      	str	r2, [r3, #20]
+  FlashDataDefault.pid_d_gain_roll=400.0;
+ 8001dba:	4b23      	ldr	r3, [pc, #140]	; (8001e48 <main+0x10c>)
+ 8001dbc:	4a24      	ldr	r2, [pc, #144]	; (8001e50 <main+0x114>)
+ 8001dbe:	619a      	str	r2, [r3, #24]
+  FlashDataDefault.pid_p_gain_yaw=3.0;
+ 8001dc0:	4b21      	ldr	r3, [pc, #132]	; (8001e48 <main+0x10c>)
+ 8001dc2:	4a22      	ldr	r2, [pc, #136]	; (8001e4c <main+0x110>)
+ 8001dc4:	61da      	str	r2, [r3, #28]
+  FlashDataDefault.pid_i_gain_yaw=0.0;
+ 8001dc6:	4b20      	ldr	r3, [pc, #128]	; (8001e48 <main+0x10c>)
+ 8001dc8:	f04f 0200 	mov.w	r2, #0
+ 8001dcc:	621a      	str	r2, [r3, #32]
+  FlashDataDefault.pid_d_gain_yaw=0.0;
+ 8001dce:	4b1e      	ldr	r3, [pc, #120]	; (8001e48 <main+0x10c>)
+ 8001dd0:	f04f 0200 	mov.w	r2, #0
+ 8001dd4:	625a      	str	r2, [r3, #36]	; 0x24
   FlashDataDefault.pid_max_pitch = 400;
- 8001dce:	4b1c      	ldr	r3, [pc, #112]	; (8001e40 <main+0x104>)
- 8001dd0:	f44f 72c8 	mov.w	r2, #400	; 0x190
- 8001dd4:	629a      	str	r2, [r3, #40]	; 0x28
+ 8001dd6:	4b1c      	ldr	r3, [pc, #112]	; (8001e48 <main+0x10c>)
+ 8001dd8:	f44f 72c8 	mov.w	r2, #400	; 0x190
+ 8001ddc:	629a      	str	r2, [r3, #40]	; 0x28
   FlashDataDefault.pid_i_max_pitch = 100;
- 8001dd6:	4b1a      	ldr	r3, [pc, #104]	; (8001e40 <main+0x104>)
- 8001dd8:	2264      	movs	r2, #100	; 0x64
- 8001dda:	62da      	str	r2, [r3, #44]	; 0x2c
+ 8001dde:	4b1a      	ldr	r3, [pc, #104]	; (8001e48 <main+0x10c>)
+ 8001de0:	2264      	movs	r2, #100	; 0x64
+ 8001de2:	62da      	str	r2, [r3, #44]	; 0x2c
   FlashDataDefault.pid_max_roll = 400;
- 8001ddc:	4b18      	ldr	r3, [pc, #96]	; (8001e40 <main+0x104>)
- 8001dde:	f44f 72c8 	mov.w	r2, #400	; 0x190
- 8001de2:	631a      	str	r2, [r3, #48]	; 0x30
+ 8001de4:	4b18      	ldr	r3, [pc, #96]	; (8001e48 <main+0x10c>)
+ 8001de6:	f44f 72c8 	mov.w	r2, #400	; 0x190
+ 8001dea:	631a      	str	r2, [r3, #48]	; 0x30
   FlashDataDefault.pid_i_max_roll = 100;
- 8001de4:	4b16      	ldr	r3, [pc, #88]	; (8001e40 <main+0x104>)
- 8001de6:	2264      	movs	r2, #100	; 0x64
- 8001de8:	635a      	str	r2, [r3, #52]	; 0x34
+ 8001dec:	4b16      	ldr	r3, [pc, #88]	; (8001e48 <main+0x10c>)
+ 8001dee:	2264      	movs	r2, #100	; 0x64
+ 8001df0:	635a      	str	r2, [r3, #52]	; 0x34
   FlashDataDefault.pid_max_yaw = 0; //no yaw
- 8001dea:	4b15      	ldr	r3, [pc, #84]	; (8001e40 <main+0x104>)
- 8001dec:	2200      	movs	r2, #0
- 8001dee:	639a      	str	r2, [r3, #56]	; 0x38
+ 8001df2:	4b15      	ldr	r3, [pc, #84]	; (8001e48 <main+0x10c>)
+ 8001df4:	2200      	movs	r2, #0
+ 8001df6:	639a      	str	r2, [r3, #56]	; 0x38
   FlashDataDefault.pid_i_max_yaw = 100;
- 8001df0:	4b13      	ldr	r3, [pc, #76]	; (8001e40 <main+0x104>)
- 8001df2:	2264      	movs	r2, #100	; 0x64
- 8001df4:	63da      	str	r2, [r3, #60]	; 0x3c
+ 8001df8:	4b13      	ldr	r3, [pc, #76]	; (8001e48 <main+0x10c>)
+ 8001dfa:	2264      	movs	r2, #100	; 0x64
+ 8001dfc:	63da      	str	r2, [r3, #60]	; 0x3c
   FlashDataDefault.maxpitchdegree=20; //degrees
- 8001df6:	4b12      	ldr	r3, [pc, #72]	; (8001e40 <main+0x104>)
- 8001df8:	4a16      	ldr	r2, [pc, #88]	; (8001e54 <main+0x118>)
- 8001dfa:	641a      	str	r2, [r3, #64]	; 0x40
+ 8001dfe:	4b12      	ldr	r3, [pc, #72]	; (8001e48 <main+0x10c>)
+ 8001e00:	4a14      	ldr	r2, [pc, #80]	; (8001e54 <main+0x118>)
+ 8001e02:	641a      	str	r2, [r3, #64]	; 0x40
   FlashDataDefault.maxrolldegree=20;  //degrees
- 8001dfc:	4b10      	ldr	r3, [pc, #64]	; (8001e40 <main+0x104>)
- 8001dfe:	4a15      	ldr	r2, [pc, #84]	; (8001e54 <main+0x118>)
- 8001e00:	645a      	str	r2, [r3, #68]	; 0x44
+ 8001e04:	4b10      	ldr	r3, [pc, #64]	; (8001e48 <main+0x10c>)
+ 8001e06:	4a13      	ldr	r2, [pc, #76]	; (8001e54 <main+0x118>)
+ 8001e08:	645a      	str	r2, [r3, #68]	; 0x44
   FlashDataDefault.maxyawdegree=30;  //degrees per second rotation
- 8001e02:	4b0f      	ldr	r3, [pc, #60]	; (8001e40 <main+0x104>)
- 8001e04:	4a14      	ldr	r2, [pc, #80]	; (8001e58 <main+0x11c>)
- 8001e06:	649a      	str	r2, [r3, #72]	; 0x48
+ 8001e0a:	4b0f      	ldr	r3, [pc, #60]	; (8001e48 <main+0x10c>)
+ 8001e0c:	4a12      	ldr	r2, [pc, #72]	; (8001e58 <main+0x11c>)
+ 8001e0e:	649a      	str	r2, [r3, #72]	; 0x48
   FlashDataDefault.minthrottle=80;    //80counts of 1000 to spin rotors
- 8001e08:	4b0d      	ldr	r3, [pc, #52]	; (8001e40 <main+0x104>)
- 8001e0a:	4a14      	ldr	r2, [pc, #80]	; (8001e5c <main+0x120>)
- 8001e0c:	64da      	str	r2, [r3, #76]	; 0x4c
+ 8001e10:	4b0d      	ldr	r3, [pc, #52]	; (8001e48 <main+0x10c>)
+ 8001e12:	4a12      	ldr	r2, [pc, #72]	; (8001e5c <main+0x120>)
+ 8001e14:	64da      	str	r2, [r3, #76]	; 0x4c
   FlashDataDefault.maxthrottle=800;   //800counts of 1000 (80%)
- 8001e0e:	4b0c      	ldr	r3, [pc, #48]	; (8001e40 <main+0x104>)
- 8001e10:	4a13      	ldr	r2, [pc, #76]	; (8001e60 <main+0x124>)
- 8001e12:	651a      	str	r2, [r3, #80]	; 0x50
+ 8001e16:	4b0c      	ldr	r3, [pc, #48]	; (8001e48 <main+0x10c>)
+ 8001e18:	4a11      	ldr	r2, [pc, #68]	; (8001e60 <main+0x124>)
+ 8001e1a:	651a      	str	r2, [r3, #80]	; 0x50
 
 
   if( CheckFlashData(FLASHCONSTADDR) == CONTROLWORD ) //Check if any Data is present
- 8001e14:	4813      	ldr	r0, [pc, #76]	; (8001e64 <main+0x128>)
- 8001e16:	f001 f9ab 	bl	8003170 <CheckFlashData>
- 8001e1a:	4603      	mov	r3, r0
- 8001e1c:	2b07      	cmp	r3, #7
- 8001e1e:	d127      	bne.n	8001e70 <main+0x134>
+ 8001e1c:	4811      	ldr	r0, [pc, #68]	; (8001e64 <main+0x128>)
+ 8001e1e:	f001 f9a7 	bl	8003170 <CheckFlashData>
+ 8001e22:	4603      	mov	r3, r0
+ 8001e24:	2b07      	cmp	r3, #7
+ 8001e26:	d123      	bne.n	8001e70 <main+0x134>
   {
 	  //Read Data and Save parameters into ACTIVE structure
 	  ReadFlashData(FLASHCONSTADDR, &FlashDataActive);
- 8001e20:	4911      	ldr	r1, [pc, #68]	; (8001e68 <main+0x12c>)
- 8001e22:	4810      	ldr	r0, [pc, #64]	; (8001e64 <main+0x128>)
- 8001e24:	f001 f9b0 	bl	8003188 <ReadFlashData>
-	  ReadFlashData(FLASHCONSTADDR, &FlashDataFlash);
- 8001e28:	4910      	ldr	r1, [pc, #64]	; (8001e6c <main+0x130>)
+ 8001e28:	490f      	ldr	r1, [pc, #60]	; (8001e68 <main+0x12c>)
  8001e2a:	480e      	ldr	r0, [pc, #56]	; (8001e64 <main+0x128>)
  8001e2c:	f001 f9ac 	bl	8003188 <ReadFlashData>
- 8001e30:	e02a      	b.n	8001e88 <main+0x14c>
- 8001e32:	bf00      	nop
- 8001e34:	e000edf0 	.word	0xe000edf0
- 8001e38:	e0001000 	.word	0xe0001000
- 8001e3c:	20000488 	.word	0x20000488
- 8001e40:	2000038c 	.word	0x2000038c
- 8001e44:	40600000 	.word	0x40600000
- 8001e48:	3dcccccd 	.word	0x3dcccccd
- 8001e4c:	442f0000 	.word	0x442f0000
- 8001e50:	42c80000 	.word	0x42c80000
+	  ReadFlashData(FLASHCONSTADDR, &FlashDataFlash);
+ 8001e30:	490e      	ldr	r1, [pc, #56]	; (8001e6c <main+0x130>)
+ 8001e32:	480c      	ldr	r0, [pc, #48]	; (8001e64 <main+0x128>)
+ 8001e34:	f001 f9a8 	bl	8003188 <ReadFlashData>
+ 8001e38:	e026      	b.n	8001e88 <main+0x14c>
+ 8001e3a:	bf00      	nop
+ 8001e3c:	e000edf0 	.word	0xe000edf0
+ 8001e40:	e0001000 	.word	0xe0001000
+ 8001e44:	20000488 	.word	0x20000488
+ 8001e48:	2000038c 	.word	0x2000038c
+ 8001e4c:	40400000 	.word	0x40400000
+ 8001e50:	43c80000 	.word	0x43c80000
  8001e54:	41a00000 	.word	0x41a00000
  8001e58:	41f00000 	.word	0x41f00000
  8001e5c:	42a00000 	.word	0x42a00000

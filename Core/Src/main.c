@@ -176,15 +176,15 @@ int main(void)
 
   //DEFAULT FLASH CONSTANTS--------------------------------------------------------------------------
   FlashDataDefault.controlData=CONTROLWORD;
-  FlashDataDefault.pid_p_gain_pitch=3.5;
-  FlashDataDefault.pid_i_gain_pitch=0.1;
-  FlashDataDefault.pid_d_gain_pitch=700.0;
-  FlashDataDefault.pid_p_gain_roll=3.5;
-  FlashDataDefault.pid_i_gain_roll=0.1;
-  FlashDataDefault.pid_d_gain_roll=700.0;
-  FlashDataDefault.pid_p_gain_yaw=3.5;
-  FlashDataDefault.pid_i_gain_yaw=0.1;
-  FlashDataDefault.pid_d_gain_yaw=100.0;
+  FlashDataDefault.pid_p_gain_pitch=3.0;
+  FlashDataDefault.pid_i_gain_pitch=0.0;
+  FlashDataDefault.pid_d_gain_pitch=400.0;
+  FlashDataDefault.pid_p_gain_roll=3.0;
+  FlashDataDefault.pid_i_gain_roll=0.0;
+  FlashDataDefault.pid_d_gain_roll=400.0;
+  FlashDataDefault.pid_p_gain_yaw=3.0;
+  FlashDataDefault.pid_i_gain_yaw=0.0;
+  FlashDataDefault.pid_d_gain_yaw=0.0;
   FlashDataDefault.pid_max_pitch = 400;
   FlashDataDefault.pid_i_max_pitch = 100;
   FlashDataDefault.pid_max_roll = 400;
